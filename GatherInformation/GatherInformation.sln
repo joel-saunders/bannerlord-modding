@@ -1,0 +1,25 @@
+﻿
+Microsoft Visual Studio Solution File, Format Version 12.00
+# Visual Studio Version 16
+VisualStudioVersion = 16.0.30002.166
+MinimumVisualStudioVersion = 10.0.40219.1
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "GatherInformation", "GatherInformation\GatherInformation.csproj", "{60EB8302-CFE6-47E6-B003-7F7EE89DDADF}"
+EndProject
+Global
+	GlobalSection(SolutionConfigurationPlatforms) = preSolution
+		Debug|Any CPU = Debug|Any CPU
+		Release|Any CPU = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(ProjectConfigurationPlatforms) = postSolution
+		{60EB8302-CFE6-47E6-B003-7F7EE89DDADF}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{60EB8302-CFE6-47E6-B003-7F7EE89DDADF}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{60EB8302-CFE6-47E6-B003-7F7EE89DDADF}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{60EB8302-CFE6-47E6-B003-7F7EE89DDADF}.Release|Any CPU.Build.0 = Release|Any CPU
+	EndGlobalSection
+	GlobalSection(SolutionProperties) = preSolution
+		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(ExtensibilityGlobals) = postSolution
+		SolutionGuid = {407DFEC8-5D59-4100-93E1-BC436FD84FB5}
+	EndGlobalSection
+EndGlobal
