@@ -41,7 +41,7 @@ namespace radiantQuestTemplate
             if (ConditionsHold(issueArgs.IssueOwner))
             {
                 issueArgs.SetPotentialIssueData(new PotentialIssueData(new Func<PotentialIssueData, Hero, IssueBase>(this.OnStartIssue),
-                typeof(), IssueBase.IssueFrequency.Common, null));
+                typeof(RQTCampaignBehavior.RQTIssue), IssueBase.IssueFrequency.Common, null));
             }
         }
 
@@ -52,8 +52,7 @@ namespace radiantQuestTemplate
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            //Hero issueTarget = issueOwner;
-            return...
+            return new RQTCampaignBehavior.RQTIssue(issueOwner);
         }
 
         public class RQTCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner
