@@ -32,10 +32,12 @@ namespace radiantQuestTemplate
         {
             CampaignEvents.OnCheckForIssueEvent.AddNonSerializedListener(this, new Action<IssueArgs>(this.OnCheckForIssues));
         }
+
         public override void SyncData(IDataStore dataStore)
         {   
             //do nothing..
         }
+
         public void OnCheckForIssues(IssueArgs issueArgs)
         {
             //Sets the Quest issue as a potential quest. First we call separate function to determine if the quest should be set as a potential quest
@@ -45,14 +47,14 @@ namespace radiantQuestTemplate
                 typeof(RQTCampaignBehavior.RQTIssue), IssueBase.IssueFrequency.Common, null));
             }
         }
+
         private bool ConditionsHold(Hero issueGiver)
         {
-            //Here is the first occurance of defining criteria for determining whether a quest will be considered for a given issueGiver
             return issueGiver != null;
         }
+
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            //The actual initialization of the issue. This is a good point to grab and store any variables.
             return new RQTCampaignBehavior.RQTIssue(issueOwner);
         }
 
@@ -61,11 +63,10 @@ namespace radiantQuestTemplate
             public RQTCampaignBehviorIssueTypeDefiner () : base(0983218932)
             {
             }
+
             protected override void DefineClassTypes()
             {
-                //Add any(well.. at least the quest and issue) interal classes here.
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTIssue), 1);
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTQuest), 2);
+                //add issue classes
             }
         }
 
@@ -74,7 +75,7 @@ namespace radiantQuestTemplate
             public RQTIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
             {
             }
-            //This is the title displayed when looking at a notable with a Quest
+
             public override TextObject Title => new TextObject("Template Quest Title");
 
             public override TextObject Description => new TextObject("Help out the quest giver!");
@@ -83,13 +84,12 @@ namespace radiantQuestTemplate
             {
                 get
                 {
-                    TextObject result = new TextObject("This is the first dialoge after the player asks I've heard you have an issue..." +
-                        "");
+                    TextObject result = new TextObject("This is the first dialoge after the player asks I've " +
+                        "heard you have an issue... I'm {TARGET.LINK} and this is {SETTLEMENT.LINK}");
                      
                     if (this.IssueOwner != null)
                     {
-                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);
-                        //MBTextManager.SetTextVariable("SETTLEMENT", this.IssueSettlement.ToString());
+                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);                        
                         StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.HomeSettlement, result);
                     }
                     return result;
@@ -173,7 +173,7 @@ namespace radiantQuestTemplate
             }
 
             // Required overrides (abstract)
-            public override TextObject Title => new TextObject("Quest Logbook Title");
+            public override TextObject Title => new TextObject("Quest Title");
 
             public override bool IsRemainingTimeHidden => false;
 
