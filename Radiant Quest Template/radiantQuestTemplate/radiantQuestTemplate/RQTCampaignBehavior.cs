@@ -153,7 +153,7 @@ namespace radiantQuestTemplate
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new RQTCampaignBehavior.RQTCampaignBehaviorIssueQuest(questId, base.IssueOwner, this._targetHero,
+                return new RQTCampaignBehavior.RQTQuest(questId, base.IssueOwner,
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -161,6 +161,89 @@ namespace radiantQuestTemplate
             {
                 throw new NotImplementedException();
             }
+        }
+
+        internal class RQTQuest : QuestBase
+        {
+            public RQTQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
+            {
+                this.SetDialogs();
+                this.InitializeQuestOnCreation();
+            }
+
+            // Required overrides (abstract)
+            public override TextObject Title => new TextObject("Quest Title");
+
+            public override bool IsRemainingTimeHidden => false;
+
+            protected override void InitializeQuestOnGameLoad()
+            {
+                throw new NotImplementedException();
+            }
+
+            protected override void SetDialogs()
+            {
+                throw new NotImplementedException();
+            }
+            // </Required overrides
+
+            // Optional Overrides (virtual)
+            protected override void RegisterEvents()
+            {
+                base.RegisterEvents();
+            }
+
+            public override bool IsQuestGiverHidden => false;
+            public override bool IsSpecialQuest => false;
+            public override int GetCurrentProgress()
+            {
+                return base.GetCurrentProgress();
+            }
+            public override int GetMaxProgress()
+            {
+                return base.GetMaxProgress();
+            }
+            public override string GetPrefabName()
+            {
+                return base.GetPrefabName();
+            }
+            public override void OnCanceled()
+            {
+                base.OnCanceled();
+            }
+            public override void OnFailed()
+            {
+                base.OnFailed();
+            }
+            public override bool QuestPreconditions()
+            {
+                return base.QuestPreconditions();
+            }
+            protected override void OnBeforeTimedOut(ref bool completeWithSuccess)
+            {
+                base.OnBeforeTimedOut(ref completeWithSuccess);
+            }
+            protected override void OnBetrayal()
+            {
+                base.OnBetrayal();
+            }
+            protected override void OnCompleteWithSuccess()
+            {
+                base.OnCompleteWithSuccess();
+            }
+            protected override void OnFinalize()
+            {
+                base.OnFinalize();
+            }
+            protected override void OnStartQuest()
+            {
+                base.OnStartQuest();
+            }
+            protected override void OnTimedOut()
+            {
+                base.OnTimedOut();
+            }            
+            // </Optional Overrides
         }
     }
 }
