@@ -67,7 +67,8 @@ namespace radiantQuestTemplate
 
             protected override void DefineClassTypes()
             {
-                //add issue classes
+                AddClassDefinition(typeof(RQTCampaignBehavior.RQTIssue), 1);
+                AddClassDefinition(typeof(RQTCampaignBehavior.RQTQuest), 1);
             }
         }
 
@@ -77,6 +78,7 @@ namespace radiantQuestTemplate
             {
             }
 
+            // <Required overrides (abstract)
             public override TextObject Title => new TextObject("Template Quest Title");
 
             public override TextObject Description => new TextObject("Help out the quest giver!");
@@ -102,7 +104,7 @@ namespace radiantQuestTemplate
             {
                 get
                 {
-                    return new TextObject("What are you needing help with though, I'm not trying to fight a gang war.");
+                    return new TextObject("This is the seconed dialogue. The players response to the Quest giver's issue.");
                 }
             }
 
@@ -110,8 +112,7 @@ namespace radiantQuestTemplate
             {
                 get
                 {
-                    return new TextObject("No, no nothing of the sort. In fact, all I'm actually looking for is information. Perhaps if they " +
-                        "were to get somewhat inebraited, they may become a little too comfortable talking about their business dealings with you.");
+                    return new TextObject("This is the third dialoge. It is said by the quest giver");
                 }
             }
 
@@ -119,24 +120,24 @@ namespace radiantQuestTemplate
             {
                 get
                 {
-                    return new TextObject("Get them drunk and let them do the rest? I can handle this.");
+                    return new TextObject("This is the 4th dialoge. Said by the player, it confirms the acceptance of the quest.");
                 }
             }
 
-            protected override bool IsThereAlternativeSolution => throw new NotImplementedException();
+            protected override bool IsThereAlternativeSolution => false;
 
-            protected override bool IsThereLordSolution => throw new NotImplementedException();
+            protected override bool IsThereLordSolution => false; //not sure what this is..
 
-            public override IssueBase.IssueFrequency GetFrequency()
+            public override IssueBase.IssueFrequency GetFrequency() //VeryCommon, Common, Rare
             {
-                return IssueBase.IssueFrequency.Common;
+                return IssueBase.IssueFrequency.VeryCommon;
             }
 
-            public override bool IssueStayAliveConditions()
+            public override bool IssueStayAliveConditions() //not sure what this is
             {
                 return true;
             }
-
+            //Not sure what the difference is between this and the "oncheckforissues" logic. Does this allow the quest to still generate but you just can't see it?
             protected override bool CanPlayerTakeQuestConditions(Hero issueGiver, out PreconditionFlags flag, out Hero relationHero, out SkillObject skill)
             {
                 bool flag2 = issueGiver.GetRelationWithPlayer() >= -10;
@@ -150,7 +151,7 @@ namespace radiantQuestTemplate
             protected override void CompleteIssueWithTimedOutConsequences()
             {
             }
-
+            //When the quest is generated and params are passed into the Quest instance.
             protected override QuestBase GenerateIssueQuest(string questId)
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
@@ -161,16 +162,19 @@ namespace radiantQuestTemplate
 
             protected override void OnGameLoad()
             {
-                throw new NotImplementedException();
-            }
-        }
 
+            }
+            // </Required overrides (abstract)
+        }
+        //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class RQTQuest : QuestBase
         {
             public RQTQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
             {
+                //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
+                base.AddLog(new TextObject("The quest has begun!!! woooo!"));
             }
 
             // Required overrides (abstract)
@@ -180,12 +184,20 @@ namespace radiantQuestTemplate
 
             protected override void InitializeQuestOnGameLoad()
             {
-                throw new NotImplementedException();
+                this.SetDialogs();
             }
-
+            //there are a couple DialogFlows QuestBase has that you'll want to set here. In addition, whatever other dialog flows you have should also
+            //be called here. Have them in separate methods for simplicity.
             protected override void SetDialogs()
             {
-                throw new NotImplementedException();
+                this.OfferDialogFlow = DialogFlow.CreateDialogFlow("issue_classic_quest_start", 100).
+                    NpcLine("Good, I'm glad you've agreed to the quest. Good luck!").
+                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver).
+                        Consequence(QuestAcceptedConsequences).CloseDialog();
+                this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100).
+                    NpcLine("Why are you here? Shouldn't you be questing?").
+                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);                        
+                //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
             }
             // </Required overrides
 
@@ -196,7 +208,7 @@ namespace radiantQuestTemplate
             }
 
             public override bool IsQuestGiverHidden => false;
-            public override bool IsSpecialQuest => false;
+            public override bool IsSpecialQuest => false; //who knows :shrug emoji
             public override int GetCurrentProgress()
             {
                 return base.GetCurrentProgress();
@@ -246,6 +258,12 @@ namespace radiantQuestTemplate
                 base.OnTimedOut();
             }            
             // </Optional Overrides
+
+            // <Delegates
+            private void QuestAcceptedConsequences()
+            {
+                base.StartQuest();
+            }
         }
     }
 }
