@@ -28,6 +28,7 @@ namespace radiantQuestTemplate
 {
     class RQTCampaignBehavior : CampaignBehaviorBase
     {
+        //Event regestration. Examples, AddGameMenu; MissionTickEvent; OnPlayerBattleEndEvent; PartyVisibilityChangedEvent; OnUnitRecruitedEvent; KingdomCreatedEvent
         public override void RegisterEvents()
         {
             CampaignEvents.OnCheckForIssueEvent.AddNonSerializedListener(this, new Action<IssueArgs>(this.OnCheckForIssues));
@@ -47,7 +48,7 @@ namespace radiantQuestTemplate
                 typeof(RQTCampaignBehavior.RQTIssue), IssueBase.IssueFrequency.Common, null));
             }
         }
-
+        //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver)
         {
             return issueGiver != null;
