@@ -23,10 +23,11 @@ using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
 using TaleWorlds.CampaignSystem.SandBox.Issues;
 using NetworkMessages.FromServer;
+using Messages.FromClient.ToLobbyServer;
 
-namespace radiantQuestTemplate
+namespace VillageBoyGoesBad
 {
-    class RQTCampaignBehavior : CampaignBehaviorBase
+    class VBGBCampaignBehavior : CampaignBehaviorBase
     {
         //Event regestration. Examples, AddGameMenu; MissionTickEvent; OnPlayerBattleEndEvent; PartyVisibilityChangedEvent; OnUnitRecruitedEvent; KingdomCreatedEvent
         public override void RegisterEvents()
@@ -35,7 +36,7 @@ namespace radiantQuestTemplate
         }
 
         public override void SyncData(IDataStore dataStore)
-        {   
+        {
             //do nothing..
         }
 
@@ -45,41 +46,43 @@ namespace radiantQuestTemplate
             if (ConditionsHold(issueArgs.IssueOwner))
             {
                 issueArgs.SetPotentialIssueData(new PotentialIssueData(new Func<PotentialIssueData, Hero, IssueBase>(this.OnStartIssue),
-                typeof(RQTCampaignBehavior.RQTIssue), IssueBase.IssueFrequency.VeryCommon, null));
+                typeof(VBGBCampaignBehavior.VBGBIssue), IssueBase.IssueFrequency.VeryCommon, null));
             }
         }
         //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver)
         {
-            return issueGiver != null;
+            return issueGiver != null &&
+                    issueGiver.HomeSettlement.IsVillage &&
+                    issueGiver.HomeSettlement.Village.Bound.Notables.Any((Hero gl) => gl.IsGangLeader && !gl.IsOccupiedByAnEvent());
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            return new RQTCampaignBehavior.RQTIssue(issueOwner);
+            return new VBGBCampaignBehavior.VBGBIssue(issueOwner);
         }
 
-        public class RQTCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner
+        public class VBGBCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner
         {
-            public RQTCampaignBehviorIssueTypeDefiner () : base(0983218932)
+            public VBGBCampaignBehviorIssueTypeDefiner() : base(0983218932)
             {
             }
 
             protected override void DefineClassTypes()
             {
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTIssue), 1);
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTQuest), 1);
+                AddClassDefinition(typeof(VBGBCampaignBehavior.VBGBIssue), 1);
+                AddClassDefinition(typeof(VBGBCampaignBehavior.VBGBQuest), 1);
             }
         }
 
-        internal class RQTIssue : IssueBase
+        internal class VBGBIssue : IssueBase
         {
-            public RQTIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
+            public VBGBIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
             {
             }
 
             // <Required overrides (abstract)
-            public override TextObject Title => new TextObject("Template Quest Title");
+            public override TextObject Title => new TextObject("A rouge in the making");
 
             public override TextObject Description => new TextObject("Help out the quest giver!");
 
@@ -87,12 +90,11 @@ namespace radiantQuestTemplate
             {
                 get
                 {
-                    TextObject result = new TextObject("This is the first dialoge after the player asks I've " +
-                        "heard you have an issue... I'm {TARGET.LINK} and this is {SETTLEMENT.LINK}");
-                     
+                    TextObject result = new TextObject("Well yes, it's my son you see. He's fallen prey to the allure of targetGangLeader {TARGET.LINK} and this is {SETTLEMENT.LINK}");
+
                     if (this.IssueOwner != null)
                     {
-                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);                        
+                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);
                         StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.HomeSettlement, result);
                     }
                     return result;
@@ -156,7 +158,7 @@ namespace radiantQuestTemplate
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new RQTCampaignBehavior.RQTQuest(questId, base.IssueOwner,
+                return new VBGBCampaignBehavior.VBGBQuest(questId, base.IssueOwner,
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -167,9 +169,9 @@ namespace radiantQuestTemplate
             // </Required overrides (abstract)
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
-        internal class RQTQuest : QuestBase
+        internal class VBGBQuest : QuestBase
         {
-            public RQTQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
+            public VBGBQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this.SetDialogs();
@@ -196,7 +198,7 @@ namespace radiantQuestTemplate
                         Consequence(QuestAcceptedConsequences).CloseDialog();
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100).
                     NpcLine("Why are you here? Shouldn't you be questing?").
-                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);                        
+                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
                 //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
             }
             // </Required overrides
@@ -257,7 +259,7 @@ namespace radiantQuestTemplate
             protected override void OnTimedOut()
             {
                 base.OnTimedOut();
-            }            
+            }
             // </Optional Overrides
 
             // <Delegates
