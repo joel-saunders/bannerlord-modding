@@ -7,3 +7,8 @@ C:\Users\KC_GC_PC4\source\repos\GatherInformation\GatherInformation\obj\Debug\Ga
 C:\Users\KC_GC_PC4\source\repos\GatherInformation\GatherInformation\obj\Debug\GatherInformation.pdb
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\GatherInformation\bin\Win64_Shipping_Client\GatherInformation.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\GatherInformation\bin\Win64_Shipping_Client\GatherInformation.pdb
+D:\Bannerlord Modding\src\GatherInformation\GatherInformation\obj\Debug\GatherInformation.csprojAssemblyReference.cache
+D:\Bannerlord Modding\src\GatherInformation\GatherInformation\obj\Debug\GatherInformation.csproj.CoreCompileInputs.cache
+D:\Bannerlord Modding\src\GatherInformation\GatherInformation\obj\Debug\GatherInformation.csproj.CopyComplete
+D:\Bannerlord Modding\src\GatherInformation\GatherInformation\obj\Debug\GatherInformation.dll
+D:\Bannerlord Modding\src\GatherInformation\GatherInformation\obj\Debug\GatherInformation.pdb

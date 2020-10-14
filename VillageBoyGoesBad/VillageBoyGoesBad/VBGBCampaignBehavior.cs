@@ -16,7 +16,7 @@ using TaleWorlds.Localization;
 using TaleWorlds.CampaignSystem.Actions;
 using Helpers;
 using TaleWorlds.CampaignSystem.Overlay;
-//using System.Windows.Forms;
+using System.Windows.Forms;
 using TaleWorlds.TwoDimension;
 using TaleWorlds.CampaignSystem.SandBox;
 using TaleWorlds.Diamond.AccessProvider.Test;
@@ -53,36 +53,54 @@ namespace VillageBoyGoesBad
         private bool ConditionsHold(Hero issueGiver)
         {
             return issueGiver != null &&
-                    issueGiver.HomeSettlement.IsVillage &&
-                    issueGiver.HomeSettlement.Village.Bound.Notables.Any((Hero gl) => gl.IsGangLeader && !gl.IsOccupiedByAnEvent());
+                    issueGiver.IsHeadman && 
+                    issueGiver.CurrentSettlement != null &&
+                    issueGiver.CurrentSettlement.Village.Bound.Notables.Any((Hero gl) => gl.IsGangLeader && !gl.IsOccupiedByAnEvent());
+
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            return new VBGBCampaignBehavior.VBGBIssue(issueOwner);
+
+            Hero gangLeader = this.GetGangNotable(issueOwner);
+            return new VBGBCampaignBehavior.VBGBIssue(issueOwner, gangLeader);
         }
 
+        private Hero GetGangNotable(Hero issueOwner)
+        {
+            Hero result = null;
+            foreach(Hero hero in from x in issueOwner.CurrentSettlement.Village.Bound.Notables
+                                 where x.IsGangLeader && !x.IsOccupiedByAnEvent()
+                                 select x)
+            {
+                result = hero;
+                break;
+            }
+            return result;
+        }
         public class VBGBCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner
         {
-            public VBGBCampaignBehviorIssueTypeDefiner() : base(0983218932)
+            public VBGBCampaignBehviorIssueTypeDefiner() : base(983218932)
             {
             }
 
             protected override void DefineClassTypes()
             {
                 AddClassDefinition(typeof(VBGBCampaignBehavior.VBGBIssue), 1);
-                AddClassDefinition(typeof(VBGBCampaignBehavior.VBGBQuest), 1);
+                AddClassDefinition(typeof(VBGBCampaignBehavior.VBGBQuest), 2);
             }
         }
 
         internal class VBGBIssue : IssueBase
         {
-            public VBGBIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
+            public VBGBIssue(Hero issueOwner, Hero gangLeader) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
             {
+                this._gangLeader = gangLeader;
+                this._targetTown = issueOwner.CurrentSettlement.Village.Bound.Town;
             }
 
             // <Required overrides (abstract)
-            public override TextObject Title => new TextObject("A rouge in the making");
+            public override TextObject Title => new TextObject("A Rouge in the Making");
 
             public override TextObject Description => new TextObject("Help out the quest giver!");
 
@@ -90,12 +108,12 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
-                    TextObject result = new TextObject("Well yes, it's my son you see. He's fallen prey to the allure of targetGangLeader {TARGET.LINK} and this is {SETTLEMENT.LINK}");
+                    TextObject result = new TextObject("Well yes, it's my son you see. He's fallen prey to the allure of {TARGET.LINK} and this is {SETTLEMENT.LINK}");
 
                     if (this.IssueOwner != null)
                     {
-                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);
-                        StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.HomeSettlement, result);
+                        StringHelpers.SetCharacterProperties("TARGET", this._gangLeader.CharacterObject, null, result);
+                        StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.CurrentSettlement, result);
                     }
                     return result;
 
@@ -158,7 +176,7 @@ namespace VillageBoyGoesBad
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new VBGBCampaignBehavior.VBGBQuest(questId, base.IssueOwner,
+                return new VBGBCampaignBehavior.VBGBQuest(questId, base.IssueOwner, this._targetTown, this._gangLeader,
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -167,20 +185,69 @@ namespace VillageBoyGoesBad
 
             }
             // </Required overrides (abstract)
+
+                [SaveableField(10)]
+            public Hero _gangLeader;
+
+            [SaveableField(20)]
+            public Town _targetTown;
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class VBGBQuest : QuestBase
         {
-            public VBGBQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
+            public VBGBQuest(string questId, Hero questGiver, Town targetTown, Hero gangLeader, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
+                this._gangLeader = gangLeader;
+                this._targetTown = targetTown;
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
                 base.AddLog(new TextObject("The quest has begun!!! woooo!"));
             }
 
+            protected override void RegisterEvents()
+            {
+                base.RegisterEvents();
+                CampaignEvents.SettlementEntered.AddNonSerializedListener(this, new Action<MobileParty, Settlement, Hero>(this.EnterTargetSettlement));
+                CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener(this, new Action(this.BeforeTownEnter));
+            }
+
+            private void EnterTargetSettlement(MobileParty party, Settlement settlement, Hero hero)
+            {
+                if(party != null && party.IsMainParty && settlement != null && settlement.Town == _targetTown)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage("the headman's son must be here"));                    
+                }
+            }
+
+            private LocationCharacter CreateHeadmansSon()
+            {
+
+                Hero troop2 = HeroCreator.CreateRelativeNotableHero(QuestGiver); //CreateSpecialHero(Extensions.GetRandomElement<CharacterObject>(from x in CharacterObject.Templates
+                                                                                                         //where x.Occupation == Occupation.Outlaw                                                                                                          
+                                                                                                         //select x));
+
+
+                troop2.Name = new TextObject("Notable's son");
+
+                //Hero troop = HeroCreator.CreateSpecialHero(CharacterObject.Templates.GetRandomElement<CharacterObject>(), null, null, null);
+                AgentData agent = new AgentData(new SimpleAgentOrigin(troop2.CharacterObject));
+                LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
+                "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_gangleader", true, false, null, false, true, true);                
+
+                return locChar;
+            }
+
+            private void BeforeTownEnter()
+            {
+                if(this._targetTown != null && Settlement.CurrentSettlement == _targetTown.Settlement)
+                {
+                    Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("center");
+                    locationwithId.AddCharacter(this.CreateHeadmansSon());
+                }
+            }
             // Required overrides (abstract)
-            public override TextObject Title => new TextObject("Quest Title");
+            public override TextObject Title => new TextObject("A Rouge in the Making");
 
             public override bool IsRemainingTimeHidden => false;
 
@@ -193,21 +260,18 @@ namespace VillageBoyGoesBad
             protected override void SetDialogs()
             {
                 this.OfferDialogFlow = DialogFlow.CreateDialogFlow("issue_classic_quest_start", 100).
-                    NpcLine("Good, I'm glad you've agreed to the quest. Good luck!").
+                    NpcLine("TEMPLATE Good, I'm glad you've agreed to the quest. Good luck!").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver).
                         Consequence(QuestAcceptedConsequences).CloseDialog();
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100).
-                    NpcLine("Why are you here? Shouldn't you be questing?").
+                    NpcLine("TEMPLATE Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
                 //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
             }
             // </Required overrides
 
             // Optional Overrides (virtual)
-            protected override void RegisterEvents()
-            {
-                base.RegisterEvents();
-            }
+            
 
             public override bool IsQuestGiverHidden => false;
             public override bool IsSpecialQuest => false; //who knows :shrug emoji
@@ -277,6 +341,13 @@ namespace VillageBoyGoesBad
             {
                 base.CompleteQuestWithFail();
             }
+
+            //Saveable Properties
+            [SaveableField(10)]
+            public Hero _gangLeader;
+
+            [SaveableField(20)]
+            public Town _targetTown;                        
         }
     }
 }
