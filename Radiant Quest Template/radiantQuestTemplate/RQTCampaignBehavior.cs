@@ -26,7 +26,7 @@ using NetworkMessages.FromServer;
 
 namespace radiantQuestTemplate
 {
-    class RQTCampaignBehavior : CampaignBehaviorBase
+    class RQTCampaignBehavior : CampaignBehaviorBase //1-Update class name
     {
         //Event regestration. Examples, AddGameMenu; MissionTickEvent; OnPlayerBattleEndEvent; PartyVisibilityChangedEvent; OnUnitRecruitedEvent; KingdomCreatedEvent
         public override void RegisterEvents()
@@ -45,36 +45,36 @@ namespace radiantQuestTemplate
             if (ConditionsHold(issueArgs.IssueOwner))
             {
                 issueArgs.SetPotentialIssueData(new PotentialIssueData(new Func<PotentialIssueData, Hero, IssueBase>(this.OnStartIssue),
-                typeof(RQTCampaignBehavior.RQTIssue), IssueBase.IssueFrequency.VeryCommon, null));
+                typeof(RQTCampaignBehavior.RQTIssue), IssueBase.IssueFrequency.VeryCommon, null)); //1-Update class name
             }
         }
         //dedicated method function for Quest availablility logic
-        private bool ConditionsHold(Hero issueGiver)
+        private bool ConditionsHold(Hero issueGiver) //2-Define Issue conditions
         {
             return issueGiver != null;
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            return new RQTCampaignBehavior.RQTIssue(issueOwner);
+            return new RQTCampaignBehavior.RQTIssue(issueOwner); //1-Update class name
         }
 
-        public class RQTCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner
+        public class RQTCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner //1-Update class name
         {
-            public RQTCampaignBehviorIssueTypeDefiner () : base(0983218932)
+            public RQTCampaignBehviorIssueTypeDefiner () : base(0983218932) //1-Update class name
             {
             }
 
             protected override void DefineClassTypes()
             {
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTIssue), 1);
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTQuest), 1);
+                AddClassDefinition(typeof(RQTCampaignBehavior.RQTIssue), 1); //1-Update class name
+                AddClassDefinition(typeof(RQTCampaignBehavior.RQTQuest), 2); //1-Update class name
             }
         }
 
-        internal class RQTIssue : IssueBase
+        internal class RQTIssue : IssueBase //1-Update class name
         {
-            public RQTIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
+            public RQTIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
             {
             }
 
@@ -156,7 +156,7 @@ namespace radiantQuestTemplate
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new RQTCampaignBehavior.RQTQuest(questId, base.IssueOwner,
+                return new RQTCampaignBehavior.RQTQuest(questId, base.IssueOwner, //1-Update class name
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -167,9 +167,9 @@ namespace radiantQuestTemplate
             // </Required overrides (abstract)
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
-        internal class RQTQuest : QuestBase
+        internal class RQTQuest : QuestBase //1-Update class name
         {
-            public RQTQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
+            public RQTQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this.SetDialogs();

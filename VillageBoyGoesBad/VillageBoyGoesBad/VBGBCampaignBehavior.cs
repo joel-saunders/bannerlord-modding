@@ -222,14 +222,13 @@ namespace VillageBoyGoesBad
 
             private LocationCharacter CreateHeadmansSon()
             {
-
+                
                 Hero troop2 = HeroCreator.CreateRelativeNotableHero(QuestGiver); //CreateSpecialHero(Extensions.GetRandomElement<CharacterObject>(from x in CharacterObject.Templates
-                                                                                                         //where x.Occupation == Occupation.Outlaw                                                                                                          
-                                                                                                         //select x));
-
-
+                                                                                    //where x.Occupation == Occupation.Outlaw                                                                                                          
+                                                                                    //select x));
                 troop2.Name = new TextObject("Notable's son");
-
+                this._headmansSon = troop2;
+                
                 //Hero troop = HeroCreator.CreateSpecialHero(CharacterObject.Templates.GetRandomElement<CharacterObject>(), null, null, null);
                 AgentData agent = new AgentData(new SimpleAgentOrigin(troop2.CharacterObject));
                 LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
@@ -266,7 +265,19 @@ namespace VillageBoyGoesBad
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100).
                     NpcLine("TEMPLATE Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
-                //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
+                Campaign.Current.ConversationManager.AddDialogFlow(initalSonEncounter());
+            }
+
+            private DialogFlow initalSonEncounter()
+            {
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 6000).
+                    NpcLine("ladie ladie laaaa, just minding my own business").
+                        Condition(() => Hero.OneToOneConversationHero == _headmansSon && !_initialSonConvoComplete).
+                    PlayerLine("Hey, I know you think you're cool, but you're not!!!").
+                        
+                    NpcLine("Hey, frick off boomer.");
+
+                return resultFlow;
             }
             // </Required overrides
 
@@ -347,7 +358,13 @@ namespace VillageBoyGoesBad
             public Hero _gangLeader;
 
             [SaveableField(20)]
-            public Town _targetTown;                        
+            public Town _targetTown;
+
+            [SaveableField(30)]
+            public Hero _headmansSon;
+
+            [SaveableField(40)]
+            public bool _initialSonConvoComplete;
         }
     }
 }
