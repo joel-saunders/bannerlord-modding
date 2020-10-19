@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-//using SandBox.Source.Missions.Handlers;
+using SandBox.Source.Missions.Handlers;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.CampaignSystem;
 using SandBox;
@@ -275,14 +275,45 @@ namespace VillageBoyGoesBad
                         Condition(() => Hero.OneToOneConversationHero == _headmansSon && !_initialSonConvoComplete).
                     PlayerLine("Hey, I know you think you're cool, but you're not!!!").
                         
-                    NpcLine("Hey, frick off boomer.");
+                    NpcLine("Hey, frick off boomer.").GotoDialogState("test_test_testbadboi");
+
+                resultFlow.AddDialogLine("dialogtest", "test_test_testbadboi", "test_output", "yoooo let's go it worked", null, null, this);
+                resultFlow.AddPlayerLine("playertest", "test_output", "player_output", "yeaaaa, alright see ya!", null, null, this);
+                resultFlow.AddDialogLine("yadayada", "player_output", "let's fight", "no... fight me!!", null, 
+                    new ConversationSentence.OnConsequenceDelegate(fight_son_convo_consequence), this);
 
                 return resultFlow;
             }
             // </Required overrides
 
+            private void fight_son_convo_consequence()
+            {
+                Campaign.Current.ConversationManager.ConversationEndOneShot += this.PlayerFightsSon;
+            }
+
+            private void PlayerFightsSon()
+            {
+                Agent thug = (Agent)MissionConversationHandler.Current.ConversationManager.ConversationAgents.First((IAgent x) =>
+                    x.Character != null && x.Character == this._villageThug.CharacterObject);
+
+                //Mission.Current.Agents.First((IAgent x) => x.Character == this._villageThug.CharacterObject);
+
+                List<Agent> playerSideAgents = new List<Agent>
+                {
+                    Agent.Main
+                };
+
+                List<Agent> opponentSideAgents = new List<Agent>
+                {
+                    thug
+                };
+
+                Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, true, false, false,
+                    new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction));
+            }
+
             // Optional Overrides (virtual)
-            
+
 
             public override bool IsQuestGiverHidden => false;
             public override bool IsSpecialQuest => false; //who knows :shrug emoji
