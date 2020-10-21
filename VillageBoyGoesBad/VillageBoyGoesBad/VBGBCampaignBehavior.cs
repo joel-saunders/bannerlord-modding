@@ -261,6 +261,7 @@ namespace VillageBoyGoesBad
                 {
                     Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
                     locationwithId.AddCharacter(this.CreateHeadmansSon());
+                    
                 }
             }
             //Required overrides (abstract)
@@ -333,12 +334,12 @@ namespace VillageBoyGoesBad
                 //MissionFightHandler missionHandler = new MissionFightHandler();
                 //missionHandler.AddAgentToSide(this._sonAgent, false);
                 //missionHandler.StartCustomFight();
-                MissionFightHandler.StartBrawl();
+                //MissionFightHandler.StartBrawl();
                 
 
-                //Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, true, false, false,
-                //    new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction), false, null, null, null, null);
-                //InformationManager.DisplayMessage(new InformationMessage("made it passed start custom fight!"));                
+                Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, false, false, false,
+                    new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction), true, null, null, null, null);
+                InformationManager.DisplayMessage(new InformationMessage("made it passed start custom fight!"));                
             }
 
             private void AfterFightAction(bool isplayersidewon)

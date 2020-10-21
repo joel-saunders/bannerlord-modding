@@ -1,7 +1,6 @@
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.pdb
 D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x64\Debug\VillageBoyGoesBad.csproj.CoreCompileInputs.cache
-D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x64\Debug\VillageBoyGoesBad.csproj.CopyComplete
 D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x64\Debug\VillageBoyGoesBad.dll
 D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x64\Debug\VillageBoyGoesBad.pdb
 D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x64\Debug\VillageBoyGoesBad.csprojAssemblyReference.cache
