@@ -204,8 +204,8 @@ namespace VillageBoyGoesBad
                 this.InitializeQuestOnCreation();
                 
                 
-                TextObject newLog = new TextObject("{QUESTGIVER.LINK} from {QUESTGIVERSETTLEMENT.LINK} has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head.");
-                StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, null, newLog, false);
+                TextObject newLog = new TextObject("{QUESTGIVER.LINK}, a headman from {QUESTGIVERSETTLEMENT.LINK}, has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head.");
+                StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, this.QuestGiver.FirstName, newLog, false);
                 StringHelpers.SetSettlementProperties("QUESTGIVERSETTLEMENT", this.QuestGiver.HomeSettlement, newLog, false);
                 StringHelpers.SetSettlementProperties("TARGETTOWN", this._targetTown.Settlement, newLog, false);
                 StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, newLog, false);
@@ -248,7 +248,7 @@ namespace VillageBoyGoesBad
                 //Hero troop = HeroCreator.CreateSpecialHero(CharacterObject.Templates.GetRandomElement<CharacterObject>(), null, null, null);
                 AgentData agent = new AgentData(new SimpleAgentOrigin(troop2.CharacterObject));
                 LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
-                "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_gangleader", true, false, null, false, true, true);
+                "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", true, false, null, false, true, true);
 
                 return locChar;
                 //Location locationwithId = _targetTown.Settlement.LocationComplex.GetLocationWithId("center");
@@ -259,7 +259,7 @@ namespace VillageBoyGoesBad
             {
                 if(this._targetTown != null && Settlement.CurrentSettlement == _targetTown.Settlement && this._headmansSon == null)
                 {
-                    Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("Backstreet");
+                    Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
                     locationwithId.AddCharacter(this.CreateHeadmansSon());
                 }
             }
@@ -282,7 +282,7 @@ namespace VillageBoyGoesBad
                         Consequence(QuestAcceptedConsequences).
                     PlayerLine("That will be more than sufficient.").CloseDialog();
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
-                    NpcLine(Hero.MainHero.Name+", good to see you. My son, have you spoke with him yet?").
+                    NpcLine("My son, have you spoke with him yet?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver).
                     PlayerLine("Still working that.").
                     NpcLine("Please hurry. time is of the essence.");
@@ -300,7 +300,7 @@ namespace VillageBoyGoesBad
 
                 resultFlow.AddDialogLine("dialogtest", "test_test_testbadboi", "test_output", "yoooo let's go it worked", null, null, this);
                 resultFlow.AddPlayerLine("playertest", "test_output", "player_output", "yeaaaa, alright see ya!", null, null, this);
-                resultFlow.AddDialogLine("yadayada", "player_output", "let's fight", "no... fight me!!", null, 
+                resultFlow.AddDialogLine("yadayada", "player_output", "let's fight", "no.... fight me!!", null, 
                     new ConversationSentence.OnConsequenceDelegate(fight_son_convo_consequence), this);
 
                 return resultFlow;
@@ -317,9 +317,9 @@ namespace VillageBoyGoesBad
                 InformationManager.DisplayMessage(new InformationMessage("made it to the playerfightsondelegate"));
                 this._sonAgent = (Agent)MissionConversationHandler.Current.ConversationManager.ConversationAgents.First((IAgent x) =>
                     x.Character != null && x.Character == this._headmansSon.CharacterObject);
-                InformationManager.DisplayMessage(new InformationMessage("made it passed searching for the agent"));
+                InformationManager.DisplayMessage(new InformationMessage("made it passed searching for the agent, his state is: "+this._sonAgent.State.ToString()));
                 //Mission.Current.Agents.First((IAgent x) => x.Character == this._villageThug.CharacterObject);
-
+                
                 List<Agent> playerSideAgents = new List<Agent>
                 {
                     Agent.Main
@@ -330,11 +330,15 @@ namespace VillageBoyGoesBad
                     this._sonAgent
                 };
 
-                Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, true, false, false,
-                    new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction));
-                InformationManager.DisplayMessage(new InformationMessage("made it passed start custom fight!"));
-
+                //MissionFightHandler missionHandler = new MissionFightHandler();
+                //missionHandler.AddAgentToSide(this._sonAgent, false);
+                //missionHandler.StartCustomFight();
+                MissionFightHandler.StartBrawl();
                 
+
+                //Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, true, false, false,
+                //    new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction), false, null, null, null, null);
+                //InformationManager.DisplayMessage(new InformationMessage("made it passed start custom fight!"));                
             }
 
             private void AfterFightAction(bool isplayersidewon)

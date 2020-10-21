@@ -1,0 +1,20 @@
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\VillageBoyGoesBad.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\VillageBoyGoesBad.pdb
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\Microsoft.CSharp.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\SandBox.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\SandBox.GauntletUI.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\SandBox.View.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\SandBox.ViewModelCollection.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\System.Data.DataSetExtensions.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\System.Data.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\System.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\System.Net.Http.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\System.Windows.Forms.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\System.Xml.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\bin\x86\Debug\System.Xml.Linq.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x86\Debug\VillageBoyGoesBad.csproj.CoreCompileInputs.cache
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x86\Debug\VillageBoyGoesBad.csproj.CopyComplete
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x86\Debug\VillageBoyGoesBad.dll
+D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\x86\Debug\VillageBoyGoesBad.pdb
+D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.dll
+D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.pdb
