@@ -79,11 +79,11 @@ namespace radiantQuestTemplate
             }
 
             // <Required overrides (abstract)
-            public override TextObject Title => new TextObject("Template Quest Title");
+            public override TextObject Title => new TextObject("Template Quest Title"); //4-Update Quest naming
 
-            public override TextObject Description => new TextObject("Help out the quest giver!");
+            public override TextObject Description => new TextObject("Help out the quest giver!"); //4-Update Quest naming
 
-            protected override TextObject IssueBriefByIssueGiver
+            protected override TextObject IssueBriefByIssueGiver //3-Update quest acceptance text
             {
                 get
                 {
@@ -100,7 +100,7 @@ namespace radiantQuestTemplate
                 }
             }
 
-            protected override TextObject IssueAcceptByPlayer
+            protected override TextObject IssueAcceptByPlayer //3-Update quest acceptance text
             {
                 get
                 {
@@ -108,7 +108,7 @@ namespace radiantQuestTemplate
                 }
             }
 
-            protected override TextObject IssueQuestSolutionExplanationByIssueGiver
+            protected override TextObject IssueQuestSolutionExplanationByIssueGiver //3-Update quest acceptance text
             {
                 get
                 {
@@ -116,7 +116,7 @@ namespace radiantQuestTemplate
                 }
             }
 
-            protected override TextObject IssueQuestSolutionAcceptByPlayer
+            protected override TextObject IssueQuestSolutionAcceptByPlayer //3-Update quest acceptance text
             {
                 get
                 {
@@ -138,7 +138,7 @@ namespace radiantQuestTemplate
                 return true;
             }
             //Not sure what the difference is between this and the "oncheckforissues" logic. Does this allow the quest to still generate but you just can't see it?
-            protected override bool CanPlayerTakeQuestConditions(Hero issueGiver, out PreconditionFlags flag, out Hero relationHero, out SkillObject skill)
+            protected override bool CanPlayerTakeQuestConditions(Hero issueGiver, out PreconditionFlags flag, out Hero relationHero, out SkillObject skill) //5-Define quest requirements for taking
             {
                 bool flag2 = issueGiver.GetRelationWithPlayer() >= -10;
                 flag = (flag2 ? IssueBase.PreconditionFlags.None : IssueBase.PreconditionFlags.Relation);
@@ -174,11 +174,11 @@ namespace radiantQuestTemplate
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
-                base.AddLog(new TextObject("The quest has begun!!! woooo!"));
+                base.AddLog(new TextObject("The quest has begun!!! woooo!")); //4-Update Quest naming
             }
 
             // Required overrides (abstract)
-            public override TextObject Title => new TextObject("Quest Title");
+            public override TextObject Title => new TextObject("Quest Title"); //4-Update Quest naming
 
             public override bool IsRemainingTimeHidden => false;
 
@@ -190,12 +190,12 @@ namespace radiantQuestTemplate
             //be called here. Have them in separate methods for simplicity.
             protected override void SetDialogs()
             {
-                this.OfferDialogFlow = DialogFlow.CreateDialogFlow("issue_classic_quest_start", 100).
-                    NpcLine("Good, I'm glad you've agreed to the quest. Good luck!").
+                this.OfferDialogFlow = DialogFlow.CreateDialogFlow("issue_classic_quest_start", 100). //3-Update quest acceptance text
+                    NpcLine("TEMPLATE: Good, I'm glad you've agreed to the quest. Good luck!").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver).
                         Consequence(QuestAcceptedConsequences).CloseDialog();
-                this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100).
-                    NpcLine("Why are you here? Shouldn't you be questing?").
+                this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
+                    NpcLine("TEMPLATE: Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);                        
                 //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
             }
