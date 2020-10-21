@@ -15,3 +15,14 @@ D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\Debug\VillageB
 D:\Bannerlord Modding\src\VillageBoyGoesBad\VillageBoyGoesBad\obj\Debug\VillageBoyGoesBad.csproj.CopyComplete
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.dll
 D:\SteamLibrary\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.pdb
+C:\Bannerlord Modding\MyMods\villageboygoesbad\VillageBoyGoesBad.dll
+C:\Bannerlord Modding\MyMods\villageboygoesbad\VillageBoyGoesBad.pdb
+C:\Bannerlord Modding\src\bannerlord-modding\VillageBoyGoesBad\VillageBoyGoesBad\obj\Debug\VillageBoyGoesBad.csprojAssemblyReference.cache
+C:\Bannerlord Modding\src\bannerlord-modding\VillageBoyGoesBad\VillageBoyGoesBad\obj\Debug\VillageBoyGoesBad.csproj.CoreCompileInputs.cache
+C:\Bannerlord Modding\src\bannerlord-modding\VillageBoyGoesBad\VillageBoyGoesBad\obj\Debug\VillageBoyGoesBad.csproj.CopyComplete
+C:\Bannerlord Modding\src\bannerlord-modding\VillageBoyGoesBad\VillageBoyGoesBad\obj\Debug\VillageBoyGoesBad.dll
+C:\Bannerlord Modding\src\bannerlord-modding\VillageBoyGoesBad\VillageBoyGoesBad\obj\Debug\VillageBoyGoesBad.pdb
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\VillageBoyGoesBad.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\VillageBoyGoesBad.pdb
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.dll
+C:\Program Files (x86)\Steam\steamapps\common\Mount & Blade II Bannerlord\Modules\VillageBoyGoesBad\bin\Win64_Shipping_Client\VillageBoyGoesBad.pdb

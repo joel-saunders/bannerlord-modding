@@ -124,7 +124,7 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
-                    return new TextObject("This is the seconed dialogue. The players response to the Quest giver's issue.");
+                    return new TextObject("I see, well such is the way of the naive.");
                 }
             }
 
@@ -132,7 +132,7 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
-                    return new TextObject("This is the third dialoge. It is said by the quest giver");
+                    return new TextObject("True as that may be, I care not for him to find out his missteps the hard way. You seem to be the independent type- perhaps you could convince him the way of crime can only lead to self destruction.");
                 }
             }
 
@@ -140,7 +140,7 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
-                    return new TextObject("This is the 4th dialoge. Said by the player, it confirms the acceptance of the quest.");
+                    return new TextObject("That much I can do. I will talk with your son.");
                 }
             }
 
@@ -203,7 +203,14 @@ namespace VillageBoyGoesBad
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
                 
-                base.AddLog(new TextObject("The quest has begun!!! woooo!"));
+                
+                TextObject newLog = new TextObject("{QUESTGIVER.LINK} from {QUESTGIVERSETTLEMENT.LINK} has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head.");
+                StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, null, newLog, false);
+                StringHelpers.SetSettlementProperties("QUESTGIVERSETTLEMENT", this.QuestGiver.HomeSettlement, newLog, false);
+                StringHelpers.SetSettlementProperties("TARGETTOWN", this._targetTown.Settlement, newLog, false);
+                StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, newLog, false);
+
+                base.AddLog(newLog);
             }
 
             protected override void RegisterEvents()
@@ -270,12 +277,15 @@ namespace VillageBoyGoesBad
             protected override void SetDialogs()
             {
                 this.OfferDialogFlow = DialogFlow.CreateDialogFlow("issue_classic_quest_start", 100). //3-Update quest acceptance text
-                    NpcLine("TEMPLATE Good, I'm glad you've agreed to the quest. Good luck!").
+                    NpcLine("Excellent. I don't know how to repay you beyond what money I can muster.").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver).
-                        Consequence(QuestAcceptedConsequences).CloseDialog();
+                        Consequence(QuestAcceptedConsequences).
+                    PlayerLine("That will be more than sufficient.").CloseDialog();
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
-                    NpcLine("TEMPLATE Why are you here? Shouldn't you be questing?").
-                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
+                    NpcLine(Hero.MainHero.Name+", good to see you. My son, have you spoke with him yet?").
+                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver).
+                    PlayerLine("Still working that.").
+                    NpcLine("Please hurry. time is of the essence.");
                 Campaign.Current.ConversationManager.AddDialogFlow(initalSonEncounter());
             }
 
