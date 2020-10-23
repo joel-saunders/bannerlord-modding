@@ -178,7 +178,7 @@ namespace VillageBoyGoesBad
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
                 return new VBGBCampaignBehavior.VBGBQuest(questId, base.IssueOwner, this._targetTown, this._gangLeader,
-                    CampaignTime.DaysFromNow(17f), RewardGold);
+                    CampaignTime.DaysFromNow(10f), RewardGold);
             }
 
             protected override void OnGameLoad()
@@ -340,7 +340,7 @@ namespace VillageBoyGoesBad
                         Condition(() => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon).
                     PlayerLine("So you'll go back to daddy, yea?").
                     NpcLine("dolphinately bro").
-                        Consequence(vicotry_conversation_consequence);
+                        Consequence(vicotry_conversation_consequence).CloseDialog();
 
                 return resultDialog;
             }
@@ -348,7 +348,8 @@ namespace VillageBoyGoesBad
 
             private void vicotry_conversation_consequence()
             {
-                base.AddLog(new TextObject("you did it!!"));
+                //Campaign.Current.ConversationManager.EndConversation();
+                
                 base.CompleteQuestWithSuccess();
             }
 
@@ -444,6 +445,7 @@ namespace VillageBoyGoesBad
             }
             protected override void OnCompleteWithSuccess()
             {
+                base.AddLog(new TextObject("you did it!!"));
                 GainRenownAction.Apply(Hero.MainHero, 5f);
                 ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, this.relationGainReward);
                 GiveGoldAction.ApplyBetweenCharacters(this.QuestGiver, Hero.MainHero, 1000);
