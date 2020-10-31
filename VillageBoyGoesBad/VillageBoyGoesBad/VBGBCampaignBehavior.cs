@@ -21,6 +21,7 @@ using TaleWorlds.TwoDimension;
 using TaleWorlds.CampaignSystem.SandBox;
 using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
+using TaleWorlds.ObjectSystem;
 using TaleWorlds.CampaignSystem.SandBox.Issues;
 using NetworkMessages.FromServer;
 using Messages.FromClient.ToLobbyServer;
@@ -240,7 +241,9 @@ namespace VillageBoyGoesBad
                 //Hero troop2 = HeroCreator.CreateRelativeNotableHero(this.QuestGiver);
 
                 Hero son = HeroCreator.CreateSpecialHero((from x in CharacterObject.Templates
-                                                             where this.QuestGiver.Culture == x.Culture && x.Occupation == Occupation.Wanderer
+                                                             where this.QuestGiver.Culture == x.Culture && 
+                                                             x.Occupation == Occupation.Wanderer &&
+                                                             !x.IsFemale
                                                              select x).GetRandomElement<CharacterObject>());
 
                 son.Name = new TextObject("Notable's son");
@@ -251,7 +254,7 @@ namespace VillageBoyGoesBad
                 AgentData agent = new AgentData(new SimpleAgentOrigin(son.CharacterObject));
                 LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
                 "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_gangleader", true, false, null, false, true, true);
-
+                this._headmansSon.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>("short_sword_t3"), null));
                 return locChar;
             }
 
@@ -339,17 +342,19 @@ namespace VillageBoyGoesBad
                     NpcLine("Oh my god we did it...").
                         Condition(() => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon).
                     PlayerLine("So you'll go back to daddy, yea?").
-                    NpcLine("dolphinately bro").
-                        Consequence(vicotry_conversation_consequence).CloseDialog();
+                    NpcLine("dolphinately bro", null, null).
+                        Consequence(delegate
+                        { 
+                            Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence; 
+                        }).CloseDialog(); //GotoDialogState("close_window");
 
                 return resultDialog;
             }
             // </Required overrides
 
             private void vicotry_conversation_consequence()
-            {
-                //Campaign.Current.ConversationManager.EndConversation();
-                
+            {                                                
+                Mission.Current.SetMissionMode(MissionMode.StartUp, false);
                 base.CompleteQuestWithSuccess();
             }
 
@@ -360,6 +365,10 @@ namespace VillageBoyGoesBad
 
             private void PlayerFightsSon()
             {
+                //VBGBMIssueMissionBehavior behavior = new VBGBMIssueMissionBehavior();
+                
+                
+
                 InformationManager.DisplayMessage(new InformationMessage("made it to the playerfightsondelegate"));
                 this._sonAgent = (Agent)MissionConversationHandler.Current.ConversationManager.ConversationAgents.First((IAgent x) =>
                     x.Character != null && x.Character == this._headmansSon.CharacterObject);
@@ -374,7 +383,7 @@ namespace VillageBoyGoesBad
                     this._sonAgent
                 };
 
-                List<Agent> opponentSideAgents = new List<Agent>();
+                List<Agent> opponentSideAgents = new List<Agent>();                
                 foreach(Agent agent in Mission.Current.GetNearbyAgents(Agent.Main.Position.AsVec2, 100f))
                 {
                     if(agent.Name == "Gang Member")
@@ -386,8 +395,9 @@ namespace VillageBoyGoesBad
                 //MissionFightHandler missionHandler = new MissionFightHandler();
                 //missionHandler.AddAgentToSide(this._sonAgent, false);
                 //missionHandler.StartCustomFight();
-                //MissionFightHandler.StartBrawl();
-                
+                //MissionFightHandler.StartBrawl();                
+
+                //Mission.Current.AddMissionBehaviour(new VBGBMIssueMissionBehavior(this._sonAgent, opponentSideAgents));
 
                 Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, false, false, false,
                     new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction), true, null, null, null, null);
@@ -399,16 +409,32 @@ namespace VillageBoyGoesBad
                 if(isplayersidewon)
                 {
                     this._playerTeamWon = true;
-                    InformationManager.DisplayMessage(new InformationMessage("you won!"));
+                    
+                    
+                    if(Mission.Current.MainAgent.State != AgentState.Active)
+                    {
+                        Mission.Current.MainAgent.State = AgentState.Active;
+                    } else if (this._sonAgent.State != AgentState.Active)
+                    {
+                        this._sonAgent.State = AgentState.Active;
+                    }
 
-                    Campaign.Current.ConversationManager.SetupAndStartMissionConversation(this._sonAgent, Mission.Current.MainAgent, false);
+                    InformationManager.DisplayMessage(new InformationMessage("you won! Stats: " + Mission.Current.MainAgent.State + Mission.Current.MainAgent.Team + ", and your partner: " + this._sonAgent.State));
+                    //Campaign.Current.ConversationManager.SetupAndStartMissionConversation(this._sonAgent, Mission.Current.MainAgent, false);
                     //base.CompleteQuestWithSuccess();
+                    return;
+                } else if (!isplayersidewon)
+                {
+                    this._playerTeamWon = false;
+                    InformationManager.DisplayMessage(new InformationMessage("you lost..."));
+                    base.CompleteQuestWithFail();
+                    return;
                 }
+
+                
             }
 
             // Optional Overrides (virtual)
-
-
             public override bool IsQuestGiverHidden => false;
             public override bool IsSpecialQuest => false; //who knows :shrug emoji
             public override int GetCurrentProgress()
@@ -425,10 +451,14 @@ namespace VillageBoyGoesBad
             }
             public override void OnCanceled()
             {
+                InformationManager.DisplayMessage(new InformationMessage("OnCanceled has fired"));
                 base.OnCanceled();
             }
             public override void OnFailed()
             {
+                base.AddLog(new TextObject("you did NOT do it..."));
+                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, -this.relationGainReward);
+                this.QuestGiver.AddPower(-20f);
                 base.OnFailed();
             }
             public override bool QuestPreconditions()
@@ -454,14 +484,19 @@ namespace VillageBoyGoesBad
             }
             protected override void OnFinalize()
             {
+                InformationManager.DisplayMessage(new InformationMessage("OnFinalize has fired"));
                 base.OnFinalize();
             }
             protected override void OnStartQuest()
             {
+                InformationManager.DisplayMessage(new InformationMessage("OnStartQuest has fired"));
                 base.OnStartQuest();
             }
             protected override void OnTimedOut()
             {
+                base.AddLog(new TextObject("you did NOT do it... TOO SLOW"));
+                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, -this.relationGainReward);
+                this.QuestGiver.AddPower(-20f);
                 base.OnTimedOut();
             }
             // </Optional Overrides
@@ -470,17 +505,7 @@ namespace VillageBoyGoesBad
             private void QuestAcceptedConsequences()
             {
                 base.StartQuest();
-            }
-
-            private void SuccessComplete()
-            {
-                base.CompleteQuestWithSuccess();
-            }
-
-            private void FailureComplete()
-            {
-                base.CompleteQuestWithFail();
-            }
+            }            
 
             //Saveable Properties
             [SaveableField(10)]
