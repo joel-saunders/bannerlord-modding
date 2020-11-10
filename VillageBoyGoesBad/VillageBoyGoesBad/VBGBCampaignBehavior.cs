@@ -345,7 +345,8 @@ namespace VillageBoyGoesBad
                     NpcLine("dolphinately bro", null, null).
                         Consequence(delegate
                         { 
-                            Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence; 
+                            Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence;
+                            //PlayerEncounter.LeaveSettlement();
                         }).CloseDialog(); //GotoDialogState("close_window");
 
                 return resultDialog;
@@ -416,12 +417,20 @@ namespace VillageBoyGoesBad
                         Mission.Current.MainAgent.State = AgentState.Active;
                     } else if (this._sonAgent.State != AgentState.Active)
                     {
-                        this._sonAgent.State = AgentState.Active;
+                        Mission.Current.EndMission();
+                        InformationManager.ShowInquiry(new InquiryData("test", "content", false, false, null, null, null, null)); //could do a game menu instead
+                        //PlayerEncounter.LeaveSettlement();
+                        //PlayerEncounter.
+                        //LeaveSettlementAction.ApplyForCharacterOnly(Hero.MainHero);
+                        return;
+                        //this._sonAgent.State = AgentState.Active;
                     }
 
                     InformationManager.DisplayMessage(new InformationMessage("you won! Stats: " + Mission.Current.MainAgent.State + Mission.Current.MainAgent.Team + ", and your partner: " + this._sonAgent.State));
-                    //Campaign.Current.ConversationManager.SetupAndStartMissionConversation(this._sonAgent, Mission.Current.MainAgent, false);
+                    Campaign.Current.ConversationManager.SetupAndStartMissionConversation(this._sonAgent, Mission.Current.MainAgent, false);
                     //base.CompleteQuestWithSuccess();
+                    
+                    
                     return;
                 } else if (!isplayersidewon)
                 {
