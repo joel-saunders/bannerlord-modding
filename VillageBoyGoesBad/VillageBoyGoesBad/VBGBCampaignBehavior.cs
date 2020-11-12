@@ -93,6 +93,28 @@ namespace VillageBoyGoesBad
             }
         }
 
+        private class VBGBMIssueMissionBehavior : MissionLogic
+        {
+            public VBGBMIssueMissionBehavior()
+            {
+                //this.OnAgentHitAction = agentHitAction;
+            }
+
+            
+            //public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent, int damage, in MissionWeapon affectorWeapon)
+            //{
+            //    Action<Agent, int> onAgentHitAction = this.OnAgentHitAction;
+            //    if (onAgentHitAction == null)
+            //    {
+            //        return;
+            //    }
+            //    onAgentHitAction(affectedAgent, damage);
+            //}
+
+            
+            //private Action<Agent, int> OnAgentHitAction;
+        }
+
         internal class VBGBIssue : IssueBase
         {
             public VBGBIssue(Hero issueOwner, Hero gangLeader) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
@@ -204,6 +226,7 @@ namespace VillageBoyGoesBad
                 this._targetTown = targetTown;                
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
+                this.SetGameMenus();
                 this.relationGainReward = 10;
                 
                 TextObject newLog = new TextObject("{QUESTGIVER.LINK}, a headman from {QUESTGIVERSETTLEMENT.LINK}, has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head.");
@@ -212,7 +235,13 @@ namespace VillageBoyGoesBad
                 StringHelpers.SetSettlementProperties("TARGETTOWN", this._targetTown.Settlement, newLog, false);
                 StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, newLog, false);
 
-                base.AddLog(newLog);
+                base.AddLog(newLog);                                
+            }
+
+            protected override void InitializeQuestOnGameLoad()
+            {
+                this.SetDialogs();
+                this.SetGameMenus();
             }
 
             protected override void RegisterEvents()
@@ -220,6 +249,18 @@ namespace VillageBoyGoesBad
                 base.RegisterEvents();
                 CampaignEvents.SettlementEntered.AddNonSerializedListener(this, new Action<MobileParty, Settlement, Hero>(this.EnterTargetSettlement));
                 CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener(this, new Action(this.BeforeTownEnter));
+            }
+
+            private void SetGameMenus()
+            {
+                base.AddGameMenu("temp_test_menu_zz", new TextObject("After a few moments, Notable's son stands up and comes to his senses."), null);
+                base.AddGameMenuOption("temp_test_menu_zz", "temp_test_menu_option_zz", new TextObject("Talk with notables son"), null, 
+                    delegate {                        
+                        Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
+                        locationwithId.AddCharacter(this.createSonLocCharacter(this._headmansSon));
+                        PlayerEncounter.LocationEncounter.CreateAndOpenMissionController(Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern"),
+                 null, _headmansSon.CharacterObject);
+                    });            
             }
 
             private void EnterTargetSettlement(MobileParty party, Settlement settlement, Hero hero)
@@ -250,7 +291,17 @@ namespace VillageBoyGoesBad
 
                 this._headmansSon = son;
 
+                return this.createSonLocCharacter(son);
                 //Hero troop = HeroCreator.CreateSpecialHero(CharacterObject.Templates.GetRandomElement<CharacterObject>(), null, null, null);
+                //AgentData agent = new AgentData(new SimpleAgentOrigin(son.CharacterObject));
+                //LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
+                //"npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_gangleader", true, false, null, false, true, true);
+                //this._headmansSon.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>("short_sword_t3"), null));
+                //return locChar;
+            }
+
+            private LocationCharacter createSonLocCharacter(Hero son)
+            {
                 AgentData agent = new AgentData(new SimpleAgentOrigin(son.CharacterObject));
                 LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
                 "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_gangleader", true, false, null, false, true, true);
@@ -260,7 +311,7 @@ namespace VillageBoyGoesBad
 
             private LocationCharacter createGangMember()
             {
-                InformationManager.DisplayMessage(new InformationMessage(this.QuestGiver.Name.ToString()));
+                //InformationManager.DisplayMessage(new InformationMessage(this.QuestGiver.Name.ToString()));
                 //Hero troop2 = HeroCreator.CreateRelativeNotableHero(this.QuestGiver);
 
                 Hero hero = HeroCreator.CreateSpecialHero((from x in CharacterObject.Templates
@@ -296,10 +347,7 @@ namespace VillageBoyGoesBad
 
             public override bool IsRemainingTimeHidden => false;
 
-            protected override void InitializeQuestOnGameLoad()
-            {
-                this.SetDialogs();
-            }
+            
             //there are a couple DialogFlows QuestBase has that you'll want to set here. In addition, whatever other dialog flows you have should also
             //be called here. Have them in separate methods for simplicity.
             protected override void SetDialogs()
@@ -346,6 +394,7 @@ namespace VillageBoyGoesBad
                         Consequence(delegate
                         { 
                             Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence;
+                            
                             //PlayerEncounter.LeaveSettlement();
                         }).CloseDialog(); //GotoDialogState("close_window");
 
@@ -356,6 +405,7 @@ namespace VillageBoyGoesBad
             private void vicotry_conversation_consequence()
             {                                                
                 Mission.Current.SetMissionMode(MissionMode.StartUp, false);
+                //GameMenu.SwitchToMenu("town");
                 base.CompleteQuestWithSuccess();
             }
 
@@ -402,6 +452,8 @@ namespace VillageBoyGoesBad
 
                 Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, false, false, false,
                     new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction), true, null, null, null, null);
+                VBGBCampaignBehavior.VBGBMIssueMissionBehavior mission = new VBGBCampaignBehavior.VBGBMIssueMissionBehavior();
+                //Mission.Current.AddMissionBehaviour(mission);
                 InformationManager.DisplayMessage(new InformationMessage("made it passed start custom fight!"));                
             }
 
@@ -412,13 +464,11 @@ namespace VillageBoyGoesBad
                     this._playerTeamWon = true;
                     
                     
-                    if(Mission.Current.MainAgent.State != AgentState.Active)
-                    {
-                        Mission.Current.MainAgent.State = AgentState.Active;
-                    } else if (this._sonAgent.State != AgentState.Active)
+                    if(Mission.Current.MainAgent.State != AgentState.Active || this._sonAgent.State != AgentState.Active)
                     {
                         Mission.Current.EndMission();
-                        InformationManager.ShowInquiry(new InquiryData("test", "content", false, false, null, null, null, null)); //could do a game menu instead
+                        Campaign.Current.GameMenuManager.SetNextMenu("temp_test_menu_zz");
+                        //InformationManager.ShowInquiry(new InquiryData("test", "content", false, false, null, null, null, null)); //could do a game menu instead
                         //PlayerEncounter.LeaveSettlement();
                         //PlayerEncounter.
                         //LeaveSettlementAction.ApplyForCharacterOnly(Hero.MainHero);
@@ -494,6 +544,7 @@ namespace VillageBoyGoesBad
             protected override void OnFinalize()
             {
                 InformationManager.DisplayMessage(new InformationMessage("OnFinalize has fired"));
+                Campaign.Current.GameMenuManager.SetNextMenu("town");
                 base.OnFinalize();
             }
             protected override void OnStartQuest()

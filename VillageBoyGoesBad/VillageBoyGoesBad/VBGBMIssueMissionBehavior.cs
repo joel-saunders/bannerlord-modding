@@ -1,24 +1,29 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
+using SandBox.Source.Missions.Handlers;
+using TaleWorlds.CampaignSystem;
+using TaleWorlds.Core;
+using TaleWorlds.Library;
 using TaleWorlds.MountAndBlade;
 
 namespace VillageBoyGoesBad
 {
-    class VBGBMIssueMissionBehavior : MissionLogic
+    class VBGBMIssueMissionBehaviortest : MissionLogic
     {
-        public VBGBMIssueMissionBehavior(Agent sonAgent, List<Agent> gangAgents)
+        public VBGBMIssueMissionBehaviortest()
         {
 
         }
 
-        public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent, int damage, in MissionWeapon affectorWeapon)
-        {
-            base.OnAgentHit(affectedAgent, affectorAgent, damage, affectorWeapon);
-        }
+        //public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent, int damage, in MissionWeapon affectorWeapon)
+        //{
+        //    base.OnAgentHit(affectedAgent, affectorAgent, damage, affectorWeapon);
+        //}
 
-
+        //public override void OnAgentRemoved(Agent affectedAgent, Agent affectorAgent, AgentState agentState, KillingBlow blow)
+        //{
+        //    InformationManager.DisplayMessage(new InformationMessage("Agent has been removed!"));
+        //    base.OnAgentRemoved(affectedAgent, affectorAgent, agentState, blow);
+        //}
     }
 }
