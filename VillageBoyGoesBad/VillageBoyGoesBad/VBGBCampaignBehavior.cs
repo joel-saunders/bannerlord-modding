@@ -59,12 +59,10 @@ namespace VillageBoyGoesBad
                     issueGiver.IsHeadman && 
                     issueGiver.CurrentSettlement != null &&
                     issueGiver.CurrentSettlement.Village.Bound.Notables.Any((Hero gl) => gl.IsGangLeader && !gl.IsOccupiedByAnEvent());
-
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-
             Hero gangLeader = this.GetGangNotable(issueOwner);
             return new VBGBCampaignBehavior.VBGBIssue(issueOwner, gangLeader);
         }
@@ -376,11 +374,29 @@ namespace VillageBoyGoesBad
             private DialogFlow initalSonEncounter()
             {
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 6000).
-                    NpcLine("ladie ladie laaaa, just minding my own business").
+                    NpcLine("Hello stranger, can I help you?").
                         Condition(() => Hero.OneToOneConversationHero == this._headmansSon && !this._initialSonConvoComplete && !this._playerTeamWon).
-                    PlayerLine("Hey, I know you think you're cool, but you're not!!!").
-                        
-                    NpcLine("Hey, frick off boomer.").GotoDialogState("test_test_testbadboi");
+                    BeginPlayerOptions().
+                        PlayerOption("Yes you can, name. Your father sent me").
+                        PlayerOption("You don't know what you're getting into").EndPlayerOptions().
+                    NpcLine("Don't talk to me like a child. You sound like my father").
+                    BeginPlayerOptions().
+                        PlayerOption("I don't mean to but please just listen to me.").
+                            NpcLine("If you promise to make it quick fine.").
+                            NpcLine("Go on... what is it.").
+                                Consequence(new ConversationSentence.OnConsequenceDelegate(son_persuasion_delegate_init)).GotoDialogState("pb_vbgb_son_persuassion").
+                    PlayerOption("You're coming home with me, now. Come on, don't make this difficult.").EndPlayerOptions().
+                    NpcLine("What? what do you think you're trying to pull?!");
+
+                resultFlow.AddDialogLine("pb_vbgb_son_convo", "pb_vbgb_son_persuassion", "pb_vbgb_son_persuassion_options", "Well?", null, null, this);
+                resultFlow.AddDialogLine("pb_vbgb_son_reaction", "pb_vbgb_son_persuassion_attempt", "pb_vbgb_son_persuassion", "{PERSUASION_REACTION}", null, null, this);
+
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_1", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 1",null, 
+                    delegate { this._task.Options[0].BlockTheOption(true); }, this, 100, 
+                    new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable));
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_2", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 2", null, null, this);
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_3", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 3", null, null, this);
+
 
                 resultFlow.AddDialogLine("dialogtest", "test_test_testbadboi", "test_output", "yoooo let's go it worked", null, null, this);
                 resultFlow.AddPlayerLine("playertest", "test_output", "player_output", "yeaaaa, alright see ya!", null, null, this);
@@ -388,6 +404,38 @@ namespace VillageBoyGoesBad
                     new ConversationSentence.OnConsequenceDelegate(fight_son_convo_consequence), this);
 
                 return resultFlow;
+            }
+
+            private void son_persuasion_delegate_init()
+            {
+                ConversationManager.StartPersuasion(2, 1, 0f, 2f, 3f, 0f, PersuasionDifficulty.Medium);
+                this._task = new PersuasionTask(0);
+
+                TextObject Line = new TextObject("I suppose...");
+                PersuasionOptionArgs option1 = new PersuasionOptionArgs(DefaultSkills.Charm, DefaultTraits.Mercy,
+                    TraitEffect.Positive, PersuasionArgumentStrength.Normal, false, Line);
+                this._task.AddOptionToTask(option1);
+
+                Line = new TextObject("I suppose...");
+                PersuasionOptionArgs option2 = new PersuasionOptionArgs(DefaultSkills.Leadership, DefaultTraits.Mercy,
+                    TraitEffect.Positive, PersuasionArgumentStrength.Normal, false, Line);
+                this._task.AddOptionToTask(option2);
+
+                Line = new TextObject("I suppose...");
+                PersuasionOptionArgs option3 = new PersuasionOptionArgs(DefaultSkills.Roguery, DefaultTraits.Mercy,
+                    TraitEffect.Positive, PersuasionArgumentStrength.Normal, false, Line);
+                this._task.AddOptionToTask(option3);
+            }
+
+            private bool persuasion_option_clickable(out TextObject hintText)
+            {
+                hintText = new TextObject("no no no!", null);
+                if (this._task.Options.Any<PersuasionOptionArgs>())
+                {
+                    hintText = TextObject.Empty;
+                    return !this._task.Options[0].IsBlocked;
+                }
+                return false;
             }
 
             private DialogFlow playerTeamWonFightDialog()
@@ -417,15 +465,11 @@ namespace VillageBoyGoesBad
 
             private void fight_son_convo_consequence()
             {
-                Campaign.Current.ConversationManager.ConversationEndOneShot += this.PlayerFightsSon;
+                Campaign.Current.ConversationManager.ConversationEndOneShot += this.PlayerFightsGang;
             }
 
-            private void PlayerFightsSon()
-            {
-
-                
-
-
+            private void PlayerFightsGang()
+            {                
                 InformationManager.DisplayMessage(new InformationMessage("made it to the playerfightsondelegate"));
                 this._sonAgent = (Agent)MissionConversationHandler.Current.ConversationManager.ConversationAgents.First((IAgent x) =>
                     x.Character != null && x.Character == this._headmansSon.CharacterObject);
@@ -585,7 +629,10 @@ namespace VillageBoyGoesBad
             private void QuestAcceptedConsequences()
             {
                 base.StartQuest();
-            }            
+            }
+
+            //Properties
+            private PersuasionTask _task;
 
             //Saveable Properties
             [SaveableField(10)]
