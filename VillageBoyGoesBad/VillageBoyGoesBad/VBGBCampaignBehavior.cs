@@ -35,6 +35,7 @@ namespace VillageBoyGoesBad
         public override void RegisterEvents()
         {
             CampaignEvents.OnCheckForIssueEvent.AddNonSerializedListener(this, new Action<IssueArgs>(this.OnCheckForIssues));
+
         }
 
         public override void SyncData(IDataStore dataStore)
@@ -91,29 +92,7 @@ namespace VillageBoyGoesBad
                 AddClassDefinition(typeof(VBGBCampaignBehavior.VBGBIssue), 1);
                 AddClassDefinition(typeof(VBGBCampaignBehavior.VBGBQuest), 2);
             }
-        }
-
-        private class VBGBMIssueMissionBehavior : MissionLogic
-        {
-            public VBGBMIssueMissionBehavior()
-            {
-                //this.OnAgentHitAction = agentHitAction;
-            }
-
-            
-            //public override void OnAgentHit(Agent affectedAgent, Agent affectorAgent, int damage, in MissionWeapon affectorWeapon)
-            //{
-            //    Action<Agent, int> onAgentHitAction = this.OnAgentHitAction;
-            //    if (onAgentHitAction == null)
-            //    {
-            //        return;
-            //    }
-            //    onAgentHitAction(affectedAgent, damage);
-            //}
-
-            
-            //private Action<Agent, int> OnAgentHitAction;
-        }
+        }        
 
         internal class VBGBIssue : IssueBase
         {
@@ -235,6 +214,7 @@ namespace VillageBoyGoesBad
                 StringHelpers.SetSettlementProperties("TARGETTOWN", this._targetTown.Settlement, newLog, false);
                 StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, newLog, false);
 
+                
                 base.AddLog(newLog);                                
             }
 
@@ -249,20 +229,46 @@ namespace VillageBoyGoesBad
                 base.RegisterEvents();
                 CampaignEvents.SettlementEntered.AddNonSerializedListener(this, new Action<MobileParty, Settlement, Hero>(this.EnterTargetSettlement));
                 CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener(this, new Action(this.BeforeTownEnter));
+                CampaignEvents.OnMissionStartedEvent.AddNonSerializedListener(this, new Action<IMission>(this.OnMissionStarted));
             }
 
             private void SetGameMenus()
             {
-                base.AddGameMenu("temp_test_menu_zz", new TextObject("After a few moments, Notable's son stands up and comes to his senses."), null);
-                base.AddGameMenuOption("temp_test_menu_zz", "temp_test_menu_option_zz", new TextObject("Talk with notables son"), null, 
+                base.AddGameMenu("pb_vbgb_son_unconsious", new TextObject("After a few moments, Notable's son stands up and comes to his senses."), null);
+                base.AddGameMenuOption("pb_vbgb_son_unconsious", "pb_vbgb_son_unconsious_opiton", new TextObject("Talk with notables son"), 
+                    delegate(MenuCallbackArgs args)
+                    {
+                        args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+                        return true;
+                    }, 
                     delegate {                        
                         Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
                         locationwithId.AddCharacter(this.createSonLocCharacter(this._headmansSon));
                         PlayerEncounter.LocationEncounter.CreateAndOpenMissionController(Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern"),
                  null, _headmansSon.CharacterObject);
-                    });            
+                    });
+                base.AddGameMenu("pb_vbgb_player_unconsious", new TextObject("After a few moments, you come to your senses."), null);
+                base.AddGameMenuOption("pb_vbgb_player_unconsious", "pb_vbgb_player_unconsious_opiton", new TextObject("Talk with notables son"),
+                    delegate (MenuCallbackArgs args)
+                    {
+                        args.optionLeaveType = GameMenuOption.LeaveType.Conversation;
+                        return true;
+                    },
+                    delegate {
+                        Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
+                        locationwithId.AddCharacter(this.createSonLocCharacter(this._headmansSon));
+                        PlayerEncounter.LocationEncounter.CreateAndOpenMissionController(Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern"),
+                 null, _headmansSon.CharacterObject);
+                    });
             }
 
+            private void OnMissionStarted(IMission iMission)
+            {
+                Mission.Current.AddMissionBehaviour(new VBGBMissionFightHandler());
+                Mission.Current.RemoveMissionBehaviour(Mission.Current.GetMissionBehaviour<MissionFightHandler>());
+                Mission.Current.RemoveMissionBehaviour(Mission.Current.GetMissionBehaviour<LeaveMissionLogic>());
+                Mission.Current.MissionBehaviours.ForEach(x => InformationManager.DisplayMessage(new InformationMessage(x.ToString())));
+            }
             private void EnterTargetSettlement(MobileParty party, Settlement settlement, Hero hero)
             {
                 if(party != null && party.IsMainParty && settlement != null && settlement.Town == _targetTown)
@@ -286,7 +292,6 @@ namespace VillageBoyGoesBad
                                                              x.Occupation == Occupation.Wanderer &&
                                                              !x.IsFemale
                                                              select x).GetRandomElement<CharacterObject>());
-
                 son.Name = new TextObject("Notable's son");
 
                 this._headmansSon = son;
@@ -341,7 +346,8 @@ namespace VillageBoyGoesBad
                     locationwithId.AddCharacter(this.createGangMember());
                     locationwithId.AddCharacter(this.createGangMember());
                 }
-            }
+            }            
+            
             //Required overrides (abstract)
             public override TextObject Title => new TextObject("A Rouge in the Making");
 
@@ -416,9 +422,9 @@ namespace VillageBoyGoesBad
 
             private void PlayerFightsSon()
             {
-                //VBGBMIssueMissionBehavior behavior = new VBGBMIssueMissionBehavior();
+
                 
-                
+
 
                 InformationManager.DisplayMessage(new InformationMessage("made it to the playerfightsondelegate"));
                 this._sonAgent = (Agent)MissionConversationHandler.Current.ConversationManager.ConversationAgents.First((IAgent x) =>
@@ -443,17 +449,11 @@ namespace VillageBoyGoesBad
                     }
                 }
 
-                //MissionFightHandler missionHandler = new MissionFightHandler();
-                //missionHandler.AddAgentToSide(this._sonAgent, false);
-                //missionHandler.StartCustomFight();
-                //MissionFightHandler.StartBrawl();                
-
-                //Mission.Current.AddMissionBehaviour(new VBGBMIssueMissionBehavior(this._sonAgent, opponentSideAgents));
-
-                Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, false, false, false,
-                    new MissionFightHandler.OnFightEndDelegate(this.AfterFightAction), true, null, null, null, null);
-                VBGBCampaignBehavior.VBGBMIssueMissionBehavior mission = new VBGBCampaignBehavior.VBGBMIssueMissionBehavior();
-                //Mission.Current.AddMissionBehaviour(mission);
+                InformationManager.DisplayMessage(new InformationMessage(Mission.Current.GetMissionBehaviour<VBGBMissionFightHandler>().ToString()));
+                                              
+                Mission.Current.GetMissionBehaviour<VBGBMissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, false, false, false,
+                    new VBGBMissionFightHandler.OnFightEndDelegate(this.AfterFightAction), true, null, null, null, null);
+                                
                 InformationManager.DisplayMessage(new InformationMessage("made it passed start custom fight!"));                
             }
 
@@ -461,30 +461,49 @@ namespace VillageBoyGoesBad
             {
                 if(isplayersidewon)
                 {
+                    bool playerActive = Mission.Current.MainAgent != null && Mission.Current.MainAgent.State == AgentState.Active;
+                    bool sonActive = this._sonAgent != null && this._sonAgent.State == AgentState.Active;
                     this._playerTeamWon = true;
                     
-                    
-                    if(Mission.Current.MainAgent.State != AgentState.Active || this._sonAgent.State != AgentState.Active)
+                    if(!playerActive || !sonActive) //agents are down
                     {
+                        Mission.Current.NextCheckTimeEndMission = 0f;
                         Mission.Current.EndMission();
-                        Campaign.Current.GameMenuManager.SetNextMenu("temp_test_menu_zz");
-                        //InformationManager.ShowInquiry(new InquiryData("test", "content", false, false, null, null, null, null)); //could do a game menu instead
-                        //PlayerEncounter.LeaveSettlement();
-                        //PlayerEncounter.
-                        //LeaveSettlementAction.ApplyForCharacterOnly(Hero.MainHero);
+                        if(playerActive)
+                        {
+                            Campaign.Current.GameMenuManager.SetNextMenu("pb_vbgb_son_unconsious");
+                        }
+                        else
+                        {
+                            Campaign.Current.GameMenuManager.SetNextMenu("pb_vbgb_player_unconsious");
+                        }
+                        //playerActive == true ? Campaign.Current.GameMenuManager.SetNextMenu("pb_vbgb_son_unconsious") : Campaign.Current.GameMenuManager.SetNextMenu("pb_vbgb_player_unconsious");
+                        
                         return;
-                        //this._sonAgent.State = AgentState.Active;
+                    } 
+                        else
+                    {
+                        InformationManager.DisplayMessage(new InformationMessage("you won! Stats: " + Mission.Current.MainAgent.State + Mission.Current.MainAgent.Team + ", and your partner: " + this._sonAgent.State));
+                        Campaign.Current.ConversationManager.SetupAndStartMissionConversation(this._sonAgent, Mission.Current.MainAgent, false);
+                        return;
                     }
-
-                    InformationManager.DisplayMessage(new InformationMessage("you won! Stats: " + Mission.Current.MainAgent.State + Mission.Current.MainAgent.Team + ", and your partner: " + this._sonAgent.State));
-                    Campaign.Current.ConversationManager.SetupAndStartMissionConversation(this._sonAgent, Mission.Current.MainAgent, false);
+                    //if(Mission.Current.MainAgent.State != AgentState.Active || this._sonAgent.State != AgentState.Active)
+                    //{                    
+                    //InformationManager.ShowInquiry(new InquiryData("test", "content", false, false, null, null, null, null)); //could do a game menu instead
+                    //PlayerEncounter.LeaveSettlement();
+                    //PlayerEncounter.
+                    //LeaveSettlementAction.ApplyForCharacterOnly(Hero.MainHero);
+                    //return;
+                    //this._sonAgent.State = AgentState.Active;
+                    //}
                     //base.CompleteQuestWithSuccess();
-                    
-                    
-                    return;
+
                 } else if (!isplayersidewon)
                 {
                     this._playerTeamWon = false;
+                    Mission.Current.NextCheckTimeEndMission = 0f;
+                    Mission.Current.EndMission();
+                    Campaign.Current.GameMenuManager.SetNextMenu("settlement_player_unconscious");                    
                     InformationManager.DisplayMessage(new InformationMessage("you lost..."));
                     base.CompleteQuestWithFail();
                     return;
@@ -544,7 +563,8 @@ namespace VillageBoyGoesBad
             protected override void OnFinalize()
             {
                 InformationManager.DisplayMessage(new InformationMessage("OnFinalize has fired"));
-                Campaign.Current.GameMenuManager.SetNextMenu("town");
+                if (this._playerTeamWon)
+                { Campaign.Current.GameMenuManager.SetNextMenu("town"); }
                 base.OnFinalize();
             }
             protected override void OnStartQuest()
