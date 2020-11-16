@@ -391,11 +391,18 @@ namespace VillageBoyGoesBad
                 resultFlow.AddDialogLine("pb_vbgb_son_convo", "pb_vbgb_son_persuassion", "pb_vbgb_son_persuassion_options", "Well?", null, null, this);
                 resultFlow.AddDialogLine("pb_vbgb_son_reaction", "pb_vbgb_son_persuassion_attempt", "pb_vbgb_son_persuassion", "{PERSUASION_REACTION}", null, null, this);
 
-                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_1", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 1",null, 
-                    delegate { this._task.Options[0].BlockTheOption(true); }, this, 100, 
-                    new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable));
-                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_2", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 2", null, null, this);
-                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_3", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 3", null, null, this);
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_1", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 1", null,
+                    delegate { this._task.Options[0].BlockTheOption(true); }, this, 100,
+                    new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable_1),
+                    new ConversationSentence.OnPersuasionOptionDelegate(persuasion_option_persuasion_1));
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_2", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 2", null,
+                    delegate { this._task.Options[1].BlockTheOption(true); }, this, 100,
+                    new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable_2),
+                    new ConversationSentence.OnPersuasionOptionDelegate(persuasion_option_persuasion_2));
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuassion_player_option_3", "pb_vbgb_son_persuassion_options", "pb_vbgb_son_persuassion_attempt", "player option 3", null, 
+                    delegate { this._task.Options[2].BlockTheOption(true); }, this, 100,
+                    new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable_3),
+                    new ConversationSentence.OnPersuasionOptionDelegate(persuasion_option_persuasion_3));
 
 
                 resultFlow.AddDialogLine("dialogtest", "test_test_testbadboi", "test_output", "yoooo let's go it worked", null, null, this);
@@ -427,7 +434,7 @@ namespace VillageBoyGoesBad
                 this._task.AddOptionToTask(option3);
             }
 
-            private bool persuasion_option_clickable(out TextObject hintText)
+            private bool persuasion_option_clickable_1(out TextObject hintText)
             {
                 hintText = new TextObject("no no no!", null);
                 if (this._task.Options.Any<PersuasionOptionArgs>())
@@ -436,6 +443,43 @@ namespace VillageBoyGoesBad
                     return !this._task.Options[0].IsBlocked;
                 }
                 return false;
+            }
+
+            private PersuasionOptionArgs persuasion_option_persuasion_1()
+            {
+                return this._task.Options.ElementAt(0);
+            }
+
+            private bool persuasion_option_clickable_2(out TextObject hintText)
+            {
+                hintText = new TextObject("no no no!", null);
+                if (this._task.Options.Any<PersuasionOptionArgs>())
+                {
+                    hintText = TextObject.Empty;
+                    return !this._task.Options[1].IsBlocked;
+                }
+                return false;
+            }
+
+            private PersuasionOptionArgs persuasion_option_persuasion_2()
+            {
+                return this._task.Options.ElementAt(1);
+            }
+
+            private bool persuasion_option_clickable_3(out TextObject hintText)
+            {
+                hintText = new TextObject("no no no!", null);
+                if (this._task.Options.Any<PersuasionOptionArgs>())
+                {
+                    hintText = TextObject.Empty;
+                    return !this._task.Options[2].IsBlocked;
+                }
+                return false;
+            }
+
+            private PersuasionOptionArgs persuasion_option_persuasion_3()
+            {
+                return this._task.Options.ElementAt(2);
             }
 
             private DialogFlow playerTeamWonFightDialog()
