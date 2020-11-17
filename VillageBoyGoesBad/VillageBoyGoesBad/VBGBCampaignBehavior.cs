@@ -36,12 +36,10 @@ namespace VillageBoyGoesBad
         public override void RegisterEvents()
         {
             CampaignEvents.OnCheckForIssueEvent.AddNonSerializedListener(this, new Action<IssueArgs>(this.OnCheckForIssues));
-
         }
 
         public override void SyncData(IDataStore dataStore)
-        {
-            //do nothing..
+        {           
         }
 
         public void OnCheckForIssues(IssueArgs issueArgs)
@@ -64,8 +62,8 @@ namespace VillageBoyGoesBad
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            Hero gangLeader = this.GetGangNotable(issueOwner);
-            return new VBGBCampaignBehavior.VBGBIssue(issueOwner, gangLeader);
+            //Hero gangLeader = this.GetGangNotable(issueOwner);
+            return new VBGBCampaignBehavior.VBGBIssue(issueOwner, this.GetGangNotable(issueOwner));
         }
 
         private Hero GetGangNotable(Hero issueOwner)
@@ -110,6 +108,8 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
+                    this._isFriendsWithGang = this._gangLeader.GetRelationWithPlayer() >= 10;                    
+                    
                     TextObject result = new TextObject("Well yes, it's my son you see. He's fallen prey to the allure of {TARGET.LINK} and this is {SETTLEMENT.LINK}");
 
                     if (this.IssueOwner != null)
@@ -118,7 +118,7 @@ namespace VillageBoyGoesBad
                         StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.CurrentSettlement, result);
                     }
                     return result;
-
+                    
                 }
             }
 
@@ -142,7 +142,15 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
-                    return new TextObject("That much I can do. I will talk with your son.");
+                    if(this._isFriendsWithGang)
+                    {
+                        TextObject result = new TextObject("I can get your son back. Infact, I am fairly well aquainted with {GANGLEADER.LINK}. I'm sure I can work something out with them.");
+                        StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, result, false);
+                        return result;
+                    } else
+                    {
+                        return new TextObject("That much I can do. I will talk with your son.");
+                    }                    
                 }
             }
 
@@ -188,11 +196,14 @@ namespace VillageBoyGoesBad
             }
             // </Required overrides (abstract)
 
-                [SaveableField(10)]
+            [SaveableField(10)]
             public Hero _gangLeader;
 
             [SaveableField(20)]
             public Town _targetTown;
+
+            [SaveableField(30)]
+            public bool _isFriendsWithGang;
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class VBGBQuest : QuestBase
@@ -205,7 +216,7 @@ namespace VillageBoyGoesBad
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
                 this.SetGameMenus();
-                this.relationGainReward = 10;
+                this._relationGainReward = 10;
                 
                 TextObject newLog = new TextObject("{QUESTGIVER.LINK}, a headman from {QUESTGIVERSETTLEMENT.LINK}, has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head.");
                 StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, this.QuestGiver.FirstName, newLog, false);
@@ -682,7 +693,7 @@ namespace VillageBoyGoesBad
             public override void OnFailed()
             {
                 base.AddLog(new TextObject("you did NOT do it..."));
-                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, -this.relationGainReward);
+                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, -this._relationGainReward);
                 this.QuestGiver.AddPower(-20f);
                 base.OnFailed();
             }
@@ -702,7 +713,7 @@ namespace VillageBoyGoesBad
             {
                 base.AddLog(new TextObject("you did it!!"));
                 GainRenownAction.Apply(Hero.MainHero, 5f);
-                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, this.relationGainReward);
+                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, this._relationGainReward);
                 GiveGoldAction.ApplyBetweenCharacters(this.QuestGiver, Hero.MainHero, 1000);
                 this.QuestGiver.AddPower(20f);
                 base.OnCompleteWithSuccess();
@@ -722,7 +733,7 @@ namespace VillageBoyGoesBad
             protected override void OnTimedOut()
             {
                 base.AddLog(new TextObject("you did NOT do it... TOO SLOW"));
-                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, -this.relationGainReward);
+                ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, -this._relationGainReward);
                 this.QuestGiver.AddPower(-20f);
                 base.OnTimedOut();
             }
@@ -763,7 +774,7 @@ namespace VillageBoyGoesBad
             public LocationCharacter _gangMemberLocChar2;
 
             [SaveableField(90)]
-            public int relationGainReward;
+            public int _relationGainReward;
 
             [SaveableField(100)]
             public LocationCharacter _headmansSonLocChar;
