@@ -412,13 +412,17 @@ namespace VillageBoyGoesBad
 
             private DialogFlow gangLeaderDiscussion()
             {
-                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 6000).
-                    NpcLine("Heyyyyy you can't have him!").
-                        Condition(() => Hero.OneToOneConversationHero == this._gangLeader && !_gangLeaderTalkedTo).
-                    NpcLine("I already said no, now get lost!").
-                        Condition(() => _gangLeaderTalkedTo).
-                    PlayerLine("can I have him pleeeese???").
-                    NpcLine("haha, no. Finish your persuasion snippet dummie.").Consequence(delegate { this._gangLeaderTalkedTo = true; }).CloseDialog();
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 6000).BeginNpcOptions().
+                    NpcOption("Heyyyyy you can't have him!", () => Hero.OneToOneConversationHero == this._gangLeader && !this._gangLeaderTalkedTo).
+                        Consequence(delegate { this._gangLeaderTalkedTo = true; }).PlayerLine("can I have him pleeeese???").NpcLine("haha, no. Finish your persuasion snippet dummie.").CloseDialog().
+                    NpcOption("I already said no, now get lost!", () => Hero.OneToOneConversationHero == this._gangLeader && this._gangLeaderTalkedTo).CloseDialog();
+
+                    //NpcLine("Heyyyyy you can't have him!").
+                    //    Condition(() => Hero.OneToOneConversationHero == this._gangLeader && !this._gangLeaderTalkedTo).
+                    //NpcLine("I already said no, now get lost!").
+                    //    Condition(() => this._gangLeaderTalkedTo).
+                    //PlayerLine("can I have him pleeeese???").
+                    //NpcLine("haha, no. Finish your persuasion snippet dummie.").Consequence(delegate { this._gangLeaderTalkedTo = true; }).CloseDialog();
 
                 return resultFlow;
             }
@@ -437,8 +441,8 @@ namespace VillageBoyGoesBad
                             NpcLine("If you promise to make it quick fine.").
                             NpcLine("Go on... what is it.").
                                 Consequence(new ConversationSentence.OnConsequenceDelegate(son_persuasion_delegate_init)).GotoDialogState("pb_vbgb_son_persuasion").
-                    PlayerOption("You're coming home with me, now. Come on, don't make this difficult.").
-                        ClickableCondition(new ConversationSentence.OnClickableConditionDelegate(temp_nulloutClickableOption)).EndPlayerOptions().
+                        PlayerOption("You're coming home with me, now. Come on, don't make this difficult.").
+                            ClickableCondition(new ConversationSentence.OnClickableConditionDelegate(temp_nulloutClickableOption)).EndPlayerOptions().
                     NpcLine("What? what do you think you're trying to pull?!");
 
                 resultFlow.AddDialogLine("pb_vbgb_son_convo", "pb_vbgb_son_persuasion", "pb_vbgb_son_persuasion_options", "Well?", 
@@ -479,7 +483,7 @@ namespace VillageBoyGoesBad
 
             private void son_persuasion_delegate_init()
             {
-                ConversationManager.StartPersuasion(2, 1, 0f, 2f, 3f, 0f, PersuasionDifficulty.Medium);
+                ConversationManager.StartPersuasion(2, 1, 0f, 2f, 3f, 0f, PersuasionDifficulty.Impossible);
                 this._task = new PersuasionTask(0);
 
                 TextObject Line = new TextObject("I suppose...");
@@ -548,17 +552,13 @@ namespace VillageBoyGoesBad
 
             private DialogFlow playerTeamWonFightDialog()
             {
-                DialogFlow resultDialog = DialogFlow.CreateDialogFlow("start", 6000).
-                    NpcLine("Oh my god we did it...").
-                        Condition(() => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon).
+                DialogFlow resultDialog = DialogFlow.CreateDialogFlow("start", 6000).BeginNpcOptions().
+                    NpcOption("Oh my god we did it...", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && !base.IsFinalized).
                     PlayerLine("So you'll go back to daddy, yea?").
                     NpcLine("dolphinately bro", null, null).
                         Consequence(delegate
-                        { 
-                            Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence;
-                            
-                            //PlayerEncounter.LeaveSettlement();
-                        }).CloseDialog(); //GotoDialogState("close_window");
+                        { Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence; }).CloseDialog().
+                    NpcOption("I'll head home right away!", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && base.IsFinalized).CloseDialog(); //GotoDialogState("close_window");
 
                 return resultDialog;
             }
