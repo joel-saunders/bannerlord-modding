@@ -24,9 +24,9 @@ using TaleWorlds.SaveSystem;
 using TaleWorlds.CampaignSystem.SandBox.Issues;
 using NetworkMessages.FromServer;
 
-namespace radiantQuestTemplate
+namespace LordBountyHunting
 {
-    class RQTCampaignBehavior : CampaignBehaviorBase //1-Update class name
+    class LordBountyHuntingBehavior : CampaignBehaviorBase //1-Update class name
     {
         //Event regestration. Examples, AddGameMenu; MissionTickEvent; OnPlayerBattleEndEvent; PartyVisibilityChangedEvent; OnUnitRecruitedEvent; KingdomCreatedEvent
         public override void RegisterEvents()
@@ -35,7 +35,7 @@ namespace radiantQuestTemplate
         }
 
         public override void SyncData(IDataStore dataStore)
-        {   
+        {
             //do nothing..
         }
 
@@ -45,7 +45,7 @@ namespace radiantQuestTemplate
             if (ConditionsHold(issueArgs.IssueOwner))
             {
                 issueArgs.SetPotentialIssueData(new PotentialIssueData(new Func<PotentialIssueData, Hero, IssueBase>(this.OnStartIssue),
-                typeof(RQTCampaignBehavior.RQTIssue), IssueBase.IssueFrequency.VeryCommon, null)); //1-Update class name
+                typeof(LordBountyHuntingBehavior.LordBountyHuntingIssue), IssueBase.IssueFrequency.VeryCommon, null)); //1-Update class name
             }
         }
         //dedicated method function for Quest availablility logic
@@ -56,26 +56,26 @@ namespace radiantQuestTemplate
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            InformationManager.DisplayMessage(new InformationMessage("Quest genereated at: "+issueOwner.CurrentSettlement.ToString()));
-            return new RQTCampaignBehavior.RQTIssue(issueOwner); //1-Update class name            
+            InformationManager.DisplayMessage(new InformationMessage("Quest genereated at: " + issueOwner.CurrentSettlement.ToString()));
+            return new LordBountyHuntingBehavior.LordBountyHuntingIssue(issueOwner); //1-Update class name            
         }
 
-        public class RQTCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner //1-Update class name
+        public class LordBountyHuntingTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner //1-Update class name
         {
-            public RQTCampaignBehviorIssueTypeDefiner () : base(0983218932) //1-Update class name
+            public LordBountyHuntingTypeDefiner() : base(098321891) //1-Update class name
             {
             }
 
             protected override void DefineClassTypes()
             {
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTIssue), 1); //1-Update class name
-                AddClassDefinition(typeof(RQTCampaignBehavior.RQTQuest), 2); //1-Update class name
+                AddClassDefinition(typeof(LordBountyHuntingBehavior.LordBountyHuntingIssue), 1); //1-Update class name
+                AddClassDefinition(typeof(LordBountyHuntingBehavior.LordBountyHuntingQuest), 2); //1-Update class name
             }
         }
 
-        internal class RQTIssue : IssueBase //1-Update class name
+        internal class LordBountyHuntingIssue : IssueBase //1-Update class name
         {
-            public RQTIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
+            public LordBountyHuntingIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
             {
             }
 
@@ -90,10 +90,10 @@ namespace radiantQuestTemplate
                 {
                     TextObject result = new TextObject("This is the first dialoge after the player asks I've " +
                         "heard you have an issue... I'm {TARGET.LINK} and this is {SETTLEMENT.LINK}");
-                     
+
                     if (this.IssueOwner != null)
                     {
-                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);                        
+                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);
                         StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.HomeSettlement, result);
                     }
                     return result;
@@ -157,7 +157,7 @@ namespace radiantQuestTemplate
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new RQTCampaignBehavior.RQTQuest(questId, base.IssueOwner, //1-Update class name
+                return new LordBountyHuntingBehavior.LordBountyHuntingQuest(questId, base.IssueOwner, //1-Update class name
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -168,9 +168,9 @@ namespace radiantQuestTemplate
             // </Required overrides (abstract)
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
-        internal class RQTQuest : QuestBase //1-Update class name
+        internal class LordBountyHuntingQuest : QuestBase //1-Update class name
         {
-            public RQTQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
+            public LordBountyHuntingQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this.SetDialogs();
@@ -197,7 +197,7 @@ namespace radiantQuestTemplate
                         Consequence(QuestAcceptedConsequences).CloseDialog();
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
                     NpcLine("TEMPLATE: Why are you here? Shouldn't you be questing?").
-                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);                        
+                        Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
                 //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
             }
             // </Required overrides
@@ -223,7 +223,7 @@ namespace radiantQuestTemplate
             {
                 if (base.QuestGiver.CurrentSettlement == village.Settlement)
                 {
-                    base.AddLog(new TextObject(village.Name.ToString()+" is being raided. The quest can no longer be completed."));
+                    base.AddLog(new TextObject(village.Name.ToString() + " is being raided. The quest can no longer be completed."));
                     base.CompleteQuestWithCancel(null);
                 }
             }
@@ -277,7 +277,7 @@ namespace radiantQuestTemplate
             protected override void OnTimedOut()
             {
                 base.OnTimedOut();
-            }            
+            }
             // </Optional Overrides
 
             // <Delegates
