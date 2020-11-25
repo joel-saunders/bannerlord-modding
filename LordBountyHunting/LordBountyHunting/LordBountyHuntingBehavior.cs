@@ -51,12 +51,12 @@ namespace LordBountyHunting
         //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver) //2-Define Issue conditions
         {
-            return issueGiver != null;
+            return issueGiver.IsNoble; //&& issueGiver.Clan.Settlements != null;
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            InformationManager.DisplayMessage(new InformationMessage("Quest genereated at: " + issueOwner.CurrentSettlement.ToString()));
+            InformationManager.DisplayMessage(new InformationMessage("Quest genereated"));
             return new LordBountyHuntingBehavior.LordBountyHuntingIssue(issueOwner); //1-Update class name            
         }
 
@@ -80,21 +80,20 @@ namespace LordBountyHunting
             }
 
             // <Required overrides (abstract)
-            public override TextObject Title => new TextObject("Template Quest Title"); //4-Update Quest naming
+            public override TextObject Title => new TextObject("A Lord's Bounty"); //4- Done!
 
-            public override TextObject Description => new TextObject("Help out the quest giver!"); //4-Update Quest naming
+            public override TextObject Description => new TextObject("Bring the bad guy to justice!"); //4- Done!
 
             protected override TextObject IssueBriefByIssueGiver //3-Update quest acceptance text
             {
                 get
                 {
-                    TextObject result = new TextObject("This is the first dialoge after the player asks I've " +
-                        "heard you have an issue... I'm {TARGET.LINK} and this is {SETTLEMENT.LINK}");
+                    TextObject result = new TextObject("Well yes, that is, if you're in the field of manhunting. You see, a brigand by the name of dumb-butt-head has been causing a rucus!");
 
                     if (this.IssueOwner != null)
                     {
-                        StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);
-                        StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.HomeSettlement, result);
+                        //StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);
+                        //StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.HomeSettlement, result);
                     }
                     return result;
 
@@ -139,14 +138,20 @@ namespace LordBountyHunting
                 return true;
             }
             //Not sure what the difference is between this and the "oncheckforissues" logic. Does this allow the quest to still generate but you just can't see it?
-            protected override bool CanPlayerTakeQuestConditions(Hero issueGiver, out PreconditionFlags flag, out Hero relationHero, out SkillObject skill) //5-Define quest requirements for taking
+            protected override bool CanPlayerTakeQuestConditions(Hero issueGiver, out PreconditionFlags flag, out Hero relationHero, out SkillObject skill) //5-Done
             {
-                bool flag2 = issueGiver.GetRelationWithPlayer() >= -10;
-                flag = (flag2 ? IssueBase.PreconditionFlags.None : IssueBase.PreconditionFlags.Relation);
                 relationHero = issueGiver;
                 skill = null;
-
-                return flag2;
+                flag = IssueBase.PreconditionFlags.None;
+                if(issueGiver.GetRelationWithPlayer() < -10)
+                {
+                    flag = IssueBase.PreconditionFlags.Relation;
+                }
+                if(Hero.MainHero.Clan.IsAtWarWith(issueGiver.Clan))
+                {
+                    flag = IssueBase.PreconditionFlags.AtWar;
+                }
+                return flag == IssueBase.PreconditionFlags.None;
             }
 
             protected override void CompleteIssueWithTimedOutConsequences()
@@ -175,11 +180,11 @@ namespace LordBountyHunting
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
-                base.AddLog(new TextObject("The quest has begun!!! woooo!")); //4-Update Quest naming
+                base.AddLog(new TextObject("Time to be a manhunter!")); //4- Done!
             }
 
             // Required overrides (abstract)
-            public override TextObject Title => new TextObject("Quest Title"); //4-Update Quest naming
+            public override TextObject Title => new TextObject("A Lord's Bounty"); //4- Done!
 
             public override bool IsRemainingTimeHidden => false;
 
