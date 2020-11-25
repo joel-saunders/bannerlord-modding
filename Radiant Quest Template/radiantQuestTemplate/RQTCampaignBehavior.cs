@@ -152,6 +152,14 @@ namespace radiantQuestTemplate
             protected override void CompleteIssueWithTimedOutConsequences()
             {
             }
+
+            protected override int RewardGold()
+            {
+                get
+                {
+                    return (int)(1000 * base.issueDifficultyMultiplier);
+                }
+            }
             //When the quest is generated and params are passed into the Quest instance.
             protected override QuestBase GenerateIssueQuest(string questId)
             {

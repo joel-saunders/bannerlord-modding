@@ -28,6 +28,7 @@ using Messages.FromClient.ToLobbyServer;
 using TaleWorlds.CampaignSystem.SandBox.CampaignBehaviors;
 using System.Runtime.Remoting.Messaging;
 using TaleWorlds.Library;
+using System.Data.Common;
 
 namespace VillageBoyGoesBad
 {
@@ -109,7 +110,7 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
-                    this._isFriendsWithGang = this._gangLeader.GetRelationWithPlayer() >= 10;                    
+                    //this._isFriendsWithGang = this._gangLeader.GetRelationWithPlayer() >= 10;                    
                     
                     TextObject result = new TextObject("Well yes, it's my son you see. He's fallen prey to the allure of {TARGET.LINK} and this is {SETTLEMENT.LINK}");
 
@@ -135,7 +136,11 @@ namespace VillageBoyGoesBad
             {
                 get
                 {
-                    return new TextObject("True as that may be, I care not for him to find out his missteps the hard way. You seem to be the independent type- perhaps you could convince him the way of crime can only lead to self destruction.");
+                    TextObject returnResult = new TextObject("True as that may be, I care not for him to find out his missteps the hard way. You seem to be the independent type- perhaps you could " +
+                        "convince him the way of crime can only lead to self destruction. I'm willing to pay you too, {REWARD_GOLD}{GOLD_ICON}");
+                    returnResult.SetTextVariable("REWARD_GOLD", this.RewardGold);
+                    returnResult.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
+                    return returnResult;
                 }
             }
 
@@ -182,13 +187,16 @@ namespace VillageBoyGoesBad
             protected override void CompleteIssueWithTimedOutConsequences()
             {
             }
+
+            protected override int RewardGold => (int)(350f + 1500f *base.IssueDifficultyMultiplier);
+
             //When the quest is generated and params are passed into the Quest instance.
             protected override QuestBase GenerateIssueQuest(string questId)
             {
                 InformationManager.DisplayMessage(new InformationMessage("difficulty is: "+base.IssueDifficultyMultiplier));
 
                 return new VBGBCampaignBehavior.VBGBQuest(questId, base.IssueOwner, this._targetTown, this._gangLeader, this._isFriendsWithGang,
-                    CampaignTime.DaysFromNow(10f), RewardGold);
+                    CampaignTime.DaysFromNow(10f), this.RewardGold);
             }
 
             protected override void OnGameLoad()
@@ -197,14 +205,16 @@ namespace VillageBoyGoesBad
             }
             // </Required overrides (abstract)
 
+            public bool _isFriendsWithGang => this._gangLeader.GetRelationWithPlayer() >= 10;
+
             [SaveableField(10)]
             public Hero _gangLeader;
 
             [SaveableField(20)]
             public Town _targetTown;
 
-            [SaveableField(30)]
-            public bool _isFriendsWithGang;
+            
+            
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class VBGBQuest : QuestBase
@@ -219,7 +229,8 @@ namespace VillageBoyGoesBad
                 this.SetGameMenus();
                 this._relationGainReward = 10;
                 this._gangRelationSufficient = friendsWithGang;
-
+                this._goldReward = rewardGold;
+                
 
                 TextObject newLog = new TextObject("{QUESTGIVER.LINK}, a headman from {QUESTGIVERSETTLEMENT.LINK}, has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head.");
                 StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, this.QuestGiver.FirstName, newLog, false);
@@ -276,7 +287,7 @@ namespace VillageBoyGoesBad
                     },
                     delegate {
                         Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
-                        locationwithId.AddCharacter(this.createSonLocCharacter(this._headmansSon));
+                        locationwithId.AddCharacter(this.createSonLocCharacter(this._headmansSon));                        
                         PlayerEncounter.LocationEncounter.CreateAndOpenMissionController(Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern"),
                  null, _headmansSon.CharacterObject);
                     });
@@ -369,7 +380,7 @@ namespace VillageBoyGoesBad
             {
                 AgentData agent = new AgentData(new SimpleAgentOrigin(son.CharacterObject));
                 LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
-                "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_gangleader", true, false, null, false, true, true);
+                "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_in_tavern", true, false, null, false, true, true);
                 this._headmansSon.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>("short_sword_t3"), null));
                 return locChar;
             }
@@ -403,19 +414,19 @@ namespace VillageBoyGoesBad
                 {
                     if (this._headmansSon == null)
                     {
-                        Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
-                        locationwithId.AddCharacter(this.createHeadmansSon());
+                        this._tavernLocationId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
+                        this._tavernLocationId.AddCharacter(this.createHeadmansSon());
                         this._gangMemberLocChar1 = this.createGangMember();
-                        locationwithId.AddCharacter(this._gangMemberLocChar1);
+                        this._tavernLocationId.AddCharacter(this._gangMemberLocChar1);
                         this._gangMemberLocChar2 = this.createGangMember();
-                        locationwithId.AddCharacter(this._gangMemberLocChar2);
+                        this._tavernLocationId.AddCharacter(this._gangMemberLocChar2);
                     } else if (this._headmansSon != null)
                     {
                         InformationManager.DisplayMessage(new InformationMessage("It fires: " + this._headmansSonLocChar.ToString()));
-                        Location locationwithId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
-                        locationwithId.AddCharacter(this._headmansSonLocChar);
-                        locationwithId.AddCharacter(this._gangMemberLocChar1);
-                        locationwithId.AddCharacter(this._gangMemberLocChar2);
+                        this._tavernLocationId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
+                        this._tavernLocationId.AddCharacter(this._headmansSonLocChar);
+                        this._tavernLocationId.AddCharacter(this._gangMemberLocChar1);
+                        this._tavernLocationId.AddCharacter(this._gangMemberLocChar2);
                     }
                 }
             }
@@ -449,24 +460,17 @@ namespace VillageBoyGoesBad
 
             private DialogFlow gangLeaderDiscussion()
             {
+                TextObject npcCostLine = new TextObject("Sure, but it'll cost ya. {GOLD_COST} {GOLD_ICON}");
+                npcCostLine.SetTextVariable("GOLD_COST", this.gangLeaderPayoffNeeded.ToString());
+                npcCostLine.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options", 6000).BeginPlayerOptions().
                     PlayerOption("hey hey, can I click this?").
                         Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).
-                        ClickableCondition(new ConversationSentence.OnClickableConditionDelegate(gang_leader_altern_path_clickable_delegate)).
-                    NpcLine("Sure, but it'll cost ya. 100 gold").BeginPlayerOptions().
-                    PlayerOption("Fine, take it.").Consequence(delegate { base.CompleteQuestWithSuccess(); }).NpcLine("it's a deal! Take the brat away").CloseDialog().
-                    PlayerOption("on second thought, it's not worth it").NpcLine("Fine by me.").NpcLine("Anything else?").GotoDialogState("hero_main_options");
-
-
-                
-
-                //NpcLine("Heyyyyy you can't have him!").
-                //    Condition(() => Hero.OneToOneConversationHero == this._gangLeader && !this._gangLeaderTalkedTo).
-                //NpcLine("I already said no, now get lost!").
-                //    Condition(() => this._gangLeaderTalkedTo).
-                //PlayerLine("can I have him pleeeese???").
-                //NpcLine("haha, no. Finish your persuasion snippet dummie.").Consequence(delegate { this._gangLeaderTalkedTo = true; }).CloseDialog();
-
+                        ClickableCondition(new ConversationSentence.OnClickableConditionDelegate(gang_leader_altern_path_clickable_delegate)).BeginNpcOptions().
+                    NpcOption(npcCostLine, () => this.gangLeaderPayoffNeeded > 0).BeginPlayerOptions().
+                        PlayerOption("Fine, take it.").Consequence(delegate { base.CompleteQuestWithSuccess(); }).NpcLine("it's a deal! Take the brat away").CloseDialog().
+                        PlayerOption("on second thought, it's not worth it").NpcLine("Fine by me.").NpcLine("Anything else?").GotoDialogState("hero_main_options").
+                    NpcOption("Tell ya what friend, you can just take him.", ()=> this.gangLeaderPayoffNeeded <= 0).PlayerLine("Absolutely! Thank you").Consequence(delegate { base.CompleteQuestWithSuccess(); });
                 return resultFlow;
             }
 
@@ -635,7 +639,7 @@ namespace VillageBoyGoesBad
 
             private void vicotry_conversation_consequence()
             {                                                
-                Mission.Current.SetMissionMode(MissionMode.StartUp, false);
+                //Mission.Current.SetMissionMode(MissionMode.StartUp, false);
                 //GameMenu.SwitchToMenu("town");
                 base.CompleteQuestWithSuccess();
             }
@@ -648,7 +652,7 @@ namespace VillageBoyGoesBad
             private DialogFlow playerBeatupSonDialog()
             {
                 DialogFlow resultDialog = DialogFlow.CreateDialogFlow("start", 6000).
-                    NpcLine("Ouch, fine I'll go home").Condition(() => Hero.OneToOneConversationHero == this._headmansSon && this._playerBeatSon).
+                    NpcLine("Ouch, fine I'll go home.[ib:closed][if:idle_angry][rb:negative]").Condition(() => Hero.OneToOneConversationHero == this._headmansSon && this._playerBeatSon).
                     PlayerLine("Pack up your stuff!").
                     NpcLine("I'm ready.. let's go").Consequence(delegate { Campaign.Current.ConversationManager.ConversationEndOneShot += this.player_fight_son_dialog_complete_quest; }).CloseDialog();
 
@@ -659,6 +663,48 @@ namespace VillageBoyGoesBad
             {
                 //this._sonAgent.ActionSet;
                 Mission.Current.SetMissionMode(MissionMode.StartUp, false);
+                //this._sonAgent.SetLookAgent(null);
+                //this._sonAgent.SetWatchState(AgentAIStateFlagComponent.WatchState.Alarmed);
+                this._sonAgent.GetComponent<CampaignAgentComponent>().AgentNavigator.GetActiveBehaviorGroup(); //AddBehaviorGroup<AlarmedBehaviorGroup>();
+                //GetBehaviorGroup<AlarmedBehaviorGroup>().;
+
+                //AlarmedBehaviorGroup behGroup = new AlarmedBehaviorGroup(this._sonAgent.GetComponent<CampaignAgentComponent>().AgentNavigator, Mission.Current);                
+
+                //this._sonAgent.GetComponent<CampaignAgentComponent>().GetActiveBehaviorGroup<AlarmedBehaviorGroup>().Navigator.ToString();
+
+                //foreach (AgentComponent cmp in this._sonAgent.Components)
+                //{
+                //    //foreach(GroupByBehavior gBeh in cmp)
+                //    InformationManager.DisplayMessage(new InformationMessage(cmp.ToString()));
+                //}
+
+                InformationManager.DisplayMessage(new InformationMessage(this._sonAgent.GetComponent<CampaignAgentComponent>().AgentNavigator.GetActiveBehaviorGroup().ToString()));
+
+                //AlarmedBehaviorGroup.AlarmAgent(this._sonAgent);
+
+                if (this._headmansSonLocChar.AlarmedActionSetCode == null)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage("alarmed set codes are null"));
+                } else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(this._headmansSonLocChar.AlarmedActionSetCode.ToString()));
+                }
+
+                if (this._headmansSonLocChar.ActionSetCode == null)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage("alarmed set codes are null"));
+                }
+                else
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(this._headmansSonLocChar.ActionSetCode.ToString()));
+                }
+
+                //this._headmansSonLocChar.AlarmedActionSetCode.;
+                //this._headmansSonLocChar
+                //InformationManager.DisplayMessage(new InformationMessage("action set codes?"));
+                
+                
+
                 base.CompleteQuestWithSuccess();
             }
             
@@ -779,10 +825,11 @@ namespace VillageBoyGoesBad
             {
                 if(isPlayerSideWon)
                 {
-
+                    this._sonAgent.SetAgentFacialAnimation(Agent.FacialAnimChannel.Low, "talking_sad", true);
+                    
                 } else
                 {
-
+                    //base.CompleteQuestWithFail();
                 }
             }
 
@@ -827,10 +874,22 @@ namespace VillageBoyGoesBad
             }
             protected override void OnCompleteWithSuccess()
             {
-                base.AddLog(new TextObject("you did it!!"));
+                base.AddLog(new TextObject("you did it!!"));                
+                if(this._headmansSonLocChar != null)
+                {
+                    this._tavernLocationId.RemoveLocationCharacter(this._headmansSonLocChar);
+                }
+                if(this._gangMemberLocChar1 != null)
+                {
+                    this._tavernLocationId.RemoveLocationCharacter(this._gangMemberLocChar1);
+                }
+                if (this._gangMemberLocChar2 != null)
+                {
+                    this._tavernLocationId.RemoveLocationCharacter(this._gangMemberLocChar2);
+                }
                 GainRenownAction.Apply(Hero.MainHero, 5f);
                 ChangeRelationAction.ApplyPlayerRelation(this.QuestGiver, this._relationGainReward);
-                GiveGoldAction.ApplyBetweenCharacters(this.QuestGiver, Hero.MainHero, 1000);
+                GiveGoldAction.ApplyBetweenCharacters(this.QuestGiver, Hero.MainHero, this._goldReward);
                 this.QuestGiver.AddPower(20f);
                 base.OnCompleteWithSuccess();
             }
@@ -863,6 +922,14 @@ namespace VillageBoyGoesBad
 
             //Properties
             private PersuasionTask _task;
+
+            private int gangLeaderPayoffNeeded
+            {
+                get
+                {
+                    return (int)(1000f - 25f * this._gangLeader.GetRelationWithPlayer());                    
+                }
+            }
 
             //Saveable Properties
             [SaveableField(10)]
@@ -906,6 +973,12 @@ namespace VillageBoyGoesBad
 
             [SaveableField(140)]
             public bool _gangRelationSufficient;
+
+            [SaveableField(150)]
+            public Location _tavernLocationId;
+
+            [SaveableField(160)]
+            public int _goldReward;
         }
     }
 }
