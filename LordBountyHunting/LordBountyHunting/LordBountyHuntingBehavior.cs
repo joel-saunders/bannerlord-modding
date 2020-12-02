@@ -51,15 +51,31 @@ namespace LordBountyHunting
         //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver) //2-Define Issue conditions
         {
-            return issueGiver.IsNoble; //&& issueGiver.Clan.Settlements != null;
+            return issueGiver.IsHeadman && !issueGiver.IsOccupiedByAnEvent() && issueGiver.CurrentSettlement.IsVillage && 
+                issueGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Count >= 1 &&
+                issueGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Any((Village settl)=> !settl.Settlement.IsUnderRaid && !settl.Settlement.IsRaided); 
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
         {
-            InformationManager.DisplayMessage(new InformationMessage("Quest genereated"));
-            return new LordBountyHuntingBehavior.LordBountyHuntingIssue(issueOwner); //1-Update class name            
-        }
+            InformationManager.DisplayMessage(new InformationMessage("Quest genereated, owner: "+ issueOwner.ToString()));
 
+            return new LordBountyHuntingBehavior.LordBountyHuntingIssue(issueOwner); //1-Update class name            
+
+        }
+        public enum TargetWanted
+        {
+            DeadorAlive = 0,
+            Dead = 1,
+            Alive = 2
+        };
+
+        public enum TargetsCrime
+        {
+            Thief = 0,
+            Murder = 1,
+            Deserter = 2
+        }
         public class LordBountyHuntingTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner //1-Update class name
         {
             public LordBountyHuntingTypeDefiner() : base(098321891) //1-Update class name
@@ -77,8 +93,49 @@ namespace LordBountyHunting
         {
             public LordBountyHuntingIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
             {
+                this.questGoal = DecideTargetGoal();
+                switch (this.questGoal)
+                {
+                    case TargetWanted.Alive:
+                        this._1IssueBriefByIssueGiver = new TextObject("Alive: the target is wanted alive");
+                        break;
+                    case TargetWanted.Dead:
+                        this._1IssueBriefByIssueGiver = new TextObject("Dead: don't let them see the light of day.. any more.");
+                        break;
+                    case TargetWanted.DeadorAlive:
+                        this._1IssueBriefByIssueGiver = new TextObject("Dead OR Alive: do what ya want man.");
+                        break;
+                }
+                InformationManager.DisplayMessage(new InformationMessage(this.questGoal.ToString()));
             }
 
+            public TargetWanted DecideTargetGoal()
+            {
+                Random rand = new Random();
+                float[] weights = 
+                { 
+                    1,
+                    1,
+                    1
+                };
+
+                //int randomSelection = rand.Next((int)weights.Sum());
+                float randomSelection = (float)rand.NextDouble() * weights.Sum();
+                float weightProgress = 0;
+                InformationManager.DisplayMessage(new InformationMessage("random weight: "+randomSelection.ToString()));
+                foreach (var weight in weights.Select((value, i) => new { i, value }))
+                {
+                    weightProgress += weight.value;
+                    if(weightProgress >= randomSelection)
+                    {
+                        return (TargetWanted)weight.i;
+                    }
+                }
+                return TargetWanted.Dead;
+            }
+
+            
+            
             // <Required overrides (abstract)
             public override TextObject Title => new TextObject("A Lord's Bounty"); //4- Done!
 
@@ -88,14 +145,7 @@ namespace LordBountyHunting
             {
                 get
                 {
-                    TextObject result = new TextObject("Well yes, that is, if you're in the field of manhunting. You see, a brigand by the name of dumb-butt-head has been causing a rucus!");
-
-                    if (this.IssueOwner != null)
-                    {
-                        //StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);
-                        //StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.HomeSettlement, result);
-                    }
-                    return result;
+                    return this._1IssueBriefByIssueGiver;
 
                 }
             }
@@ -162,7 +212,7 @@ namespace LordBountyHunting
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new LordBountyHuntingBehavior.LordBountyHuntingQuest(questId, base.IssueOwner, //1-Update class name
+                return new LordBountyHuntingBehavior.LordBountyHuntingQuest(questGoal, questId, base.IssueOwner, //1-Update class name
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -171,16 +221,31 @@ namespace LordBountyHunting
 
             }
             // </Required overrides (abstract)
+            [SaveableField(10)]
+            public TargetWanted questGoal;
+
+            [SaveableField(20)]
+            public TargetsCrime questTargetCrime;
+
+            [SaveableField(30)]
+            public TextObject _1IssueBriefByIssueGiver  = new TextObject("you shouldn't see this..");
+
+            [SaveableField(40)]
+            public TextObject _2IssueAcceptByPlayer;
+
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class LordBountyHuntingQuest : QuestBase //1-Update class name
         {
-            public LordBountyHuntingQuest(string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
+            public LordBountyHuntingQuest(TargetWanted questGoal, string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
+                this.PrepTargetVillage();
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
-                base.AddLog(new TextObject("Time to be a manhunter!")); //4- Done!
+                TextObject log = new TextObject("Go look for the target at: {TARGET_SETTLEMENT}");
+                StringHelpers.SetSettlementProperties("TARGET_SETTLEMENT", this.TargetVillage.Settlement, log);
+                base.AddLog(log); //4- Done!
             }
 
             // Required overrides (abstract)
@@ -213,6 +278,7 @@ namespace LordBountyHunting
                 base.RegisterEvents();
                 CampaignEvents.WarDeclared.AddNonSerializedListener(this, new Action<IFaction, IFaction>(this.OnWarDeclared));
                 CampaignEvents.VillageBeingRaided.AddNonSerializedListener(this, new Action<Village>(this.OnVillageRaid));
+                CampaignEvents.SettlementEntered.AddNonSerializedListener(this, new Action<MobileParty, Settlement, Hero>(this.OnSettlementEntered));
             }
 
             private void OnWarDeclared(IFaction faction1, IFaction faction2)
@@ -232,6 +298,26 @@ namespace LordBountyHunting
                     base.CompleteQuestWithCancel(null);
                 }
             }
+
+            private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
+            {
+                if (party != null && this.TargetVillage != null && party.IsMainParty && settlement.IsVillage && settlement.Village == this.TargetVillage)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage("Hey, this seems to be the right village. TEST"));
+                }
+            }
+
+            private void PrepTargetVillage()
+            {
+                //Random rand = new Random();
+                //IEnumerable<Village> villageList = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted);
+                
+                
+
+                //this.TargetVillage = villageList.ElementAt(rand.Next((int)villageList.Count()));
+                this.TargetVillage = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted).GetRandomElement<Village>();
+            }
+
             public override bool IsQuestGiverHidden => false;
             public override bool IsSpecialQuest => false; //who knows :shrug emoji
             public override int GetCurrentProgress()
@@ -300,6 +386,9 @@ namespace LordBountyHunting
             {
                 base.CompleteQuestWithFail();
             }
+
+            [SaveableField(10)]
+            public Village TargetVillage;
         }
     }
 }
