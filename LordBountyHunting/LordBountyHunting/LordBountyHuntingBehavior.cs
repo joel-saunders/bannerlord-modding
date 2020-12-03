@@ -243,7 +243,7 @@ namespace LordBountyHunting
                 this.PrepTargetVillage();
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
-                TextObject log = new TextObject("Go look for the target at: {TARGET_SETTLEMENT}");
+                TextObject log = new TextObject("Go look for the target at: {TARGET_SETTLEMENT.LINK}");
                 StringHelpers.SetSettlementProperties("TARGET_SETTLEMENT", this.TargetVillage.Settlement, log);
                 base.AddLog(log); //4- Done!
             }
@@ -268,10 +268,17 @@ namespace LordBountyHunting
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
                     NpcLine("TEMPLATE: Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
-                //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
+                Campaign.Current.ConversationManager.AddDialogFlow(this.targetDialog());
             }
             // </Required overrides
 
+            private DialogFlow targetDialog()
+            {
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start").NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero).
+                    PlayerLine("complete quest").Consequence( delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
+
+                return resultFlow;
+            }
             // Optional Overrides (virtual)
             protected override void RegisterEvents()
             {
@@ -300,11 +307,44 @@ namespace LordBountyHunting
             }
 
             private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
-            {
+            {                
+                //foreach(Location loc in settlement.LocationComplex.GetListOfLocations())
+                //{
+                //    InformationManager.DisplayMessage(new InformationMessage(loc.Name.ToString()));
+                //}
                 if (party != null && this.TargetVillage != null && party.IsMainParty && settlement.IsVillage && settlement.Village == this.TargetVillage)
                 {
                     InformationManager.DisplayMessage(new InformationMessage("Hey, this seems to be the right village. TEST"));
+                    if (this._targetLocChar != null)
+                    {
+                        this._targetLocationId.AddCharacter(this._targetLocChar);
+                    }
+                    else
+                    {
+                        this._targetLocationId = settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();
+                        this.createTargetCharacter();
+                        this._targetLocationId.AddCharacter(this._targetLocChar);
+                    }
                 }
+            }
+
+            private void createTargetCharacter()
+            {
+                this._targetHero = HeroCreator.CreateSpecialHero((from charTemp in CharacterObject.Templates where
+                                                                charTemp.Culture == base.QuestGiver.Culture &&
+                                                                charTemp.Age >= 16 select charTemp).GetRandomElement<CharacterObject>());
+
+                this._targetHero.Name = new TextObject("target");
+
+                InformationManager.DisplayMessage(new InformationMessage("Age: "+this._targetHero.Age.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage("Culture: "+this._targetHero.CharacterObject.Culture));
+                InformationManager.DisplayMessage(new InformationMessage("Tier: "+this._targetHero.CharacterObject.Tier.ToString()));
+
+
+                AgentData agentData = new AgentData(new SimpleAgentOrigin(this._targetHero.CharacterObject));
+
+                this._targetLocChar = new LocationCharacter(agentData, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
+                "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", false, false, null, false, true, true);
             }
 
             private void PrepTargetVillage()
@@ -312,7 +352,10 @@ namespace LordBountyHunting
                 //Random rand = new Random();
                 //IEnumerable<Village> villageList = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted);
                 
-                
+                foreach(Village v in this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted))
+                {
+                    InformationManager.DisplayMessage(new InformationMessage(v.Name.ToString()));
+                }
 
                 //this.TargetVillage = villageList.ElementAt(rand.Next((int)villageList.Count()));
                 this.TargetVillage = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted).GetRandomElement<Village>();
@@ -389,6 +432,15 @@ namespace LordBountyHunting
 
             [SaveableField(10)]
             public Village TargetVillage;
+
+            [SaveableField(20)]
+            public Hero _targetHero;
+
+            [SaveableField(30)]
+            public LocationCharacter _targetLocChar;
+
+            [SaveableField(40)]
+            public Location _targetLocationId;
         }
     }
 }
