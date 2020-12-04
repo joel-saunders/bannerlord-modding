@@ -23,6 +23,7 @@ using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
 using TaleWorlds.CampaignSystem.SandBox.Issues;
 using NetworkMessages.FromServer;
+using TaleWorlds.ObjectSystem;
 
 namespace LordBountyHunting
 {
@@ -94,19 +95,34 @@ namespace LordBountyHunting
             public LordBountyHuntingIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
             {
                 this.questGoal = DecideTargetGoal();
+                this.questTargetCrime = DecideTargetsCrime();
                 switch (this.questGoal)
                 {
                     case TargetWanted.Alive:
-                        this._1IssueBriefByIssueGiver = new TextObject("Alive: the target is wanted alive");
+                        this._1IssueBriefQuestGoal = new TextObject("Alive: the target is wanted alive");
                         break;
                     case TargetWanted.Dead:
-                        this._1IssueBriefByIssueGiver = new TextObject("Dead: don't let them see the light of day.. any more.");
+                        this._1IssueBriefQuestGoal = new TextObject("Dead: don't let them see the light of day.. any more.");
                         break;
                     case TargetWanted.DeadorAlive:
-                        this._1IssueBriefByIssueGiver = new TextObject("Dead OR Alive: do what ya want man.");
+                        this._1IssueBriefQuestGoal = new TextObject("Dead OR Alive: do what ya want man.");
                         break;
                 }
-                InformationManager.DisplayMessage(new InformationMessage(this.questGoal.ToString()));
+
+                switch (this.questTargetCrime)
+                {
+                    case TargetsCrime.Deserter:
+                        this._1IssueBriefQuestCrime = new TextObject("For their crimes of Desertion");
+                        break;
+                    case TargetsCrime.Murder:
+                        this._1IssueBriefQuestCrime = new TextObject("For their crimes of MURDER");
+                        break;
+                    case TargetsCrime.Thief:
+                        this._1IssueBriefQuestCrime = new TextObject("For their crimes of Theft");
+                        break;
+                }
+                InformationManager.DisplayMessage(new InformationMessage("Wanted: "+this.questGoal.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage("For the crime of: " + this.questTargetCrime.ToString()));
             }
 
             public TargetWanted DecideTargetGoal()
@@ -117,7 +133,7 @@ namespace LordBountyHunting
                     1,
                     1,
                     1
-                };
+                };                
 
                 //int randomSelection = rand.Next((int)weights.Sum());
                 float randomSelection = (float)rand.NextDouble() * weights.Sum();
@@ -134,8 +150,31 @@ namespace LordBountyHunting
                 return TargetWanted.Dead;
             }
 
+            public TargetsCrime DecideTargetsCrime()
+            {
+                TargetsCrime[] crimes =
+                {
+                    TargetsCrime.Deserter,
+                    TargetsCrime.Murder,
+                    TargetsCrime.Thief
+                };
+
+                return crimes.GetRandomElement<TargetsCrime>();
+            }
             
-            
+            public void DecideTargetCharacteristics()
+            {
+                Random rand = new Random();
+                if(this.questTargetCrime == TargetsCrime.Deserter)
+                {
+                    this._targetIsFemale = false;
+                }
+                else
+                {
+                    this._targetIsFemale = rand.Next(0, 2) > 0;
+                }
+            }
+
             // <Required overrides (abstract)
             public override TextObject Title => new TextObject("A Lord's Bounty"); //4- Done!
 
@@ -145,7 +184,7 @@ namespace LordBountyHunting
             {
                 get
                 {
-                    return this._1IssueBriefByIssueGiver;
+                    return new TextObject(this._1IssueBriefQuestGoal.ToString()+"..."+this._1IssueBriefQuestCrime);
 
                 }
             }
@@ -212,7 +251,7 @@ namespace LordBountyHunting
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new LordBountyHuntingBehavior.LordBountyHuntingQuest(questGoal, questId, base.IssueOwner, //1-Update class name
+                return new LordBountyHuntingBehavior.LordBountyHuntingQuest(this._targetIsFemale, this.questGoal, this.questTargetCrime, questId, base.IssueOwner, //1-Update class name
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -228,19 +267,29 @@ namespace LordBountyHunting
             public TargetsCrime questTargetCrime;
 
             [SaveableField(30)]
-            public TextObject _1IssueBriefByIssueGiver  = new TextObject("you shouldn't see this..");
+            public TextObject _1IssueBriefQuestGoal  = new TextObject("you shouldn't see this..");
 
             [SaveableField(40)]
             public TextObject _2IssueAcceptByPlayer;
+
+            [SaveableField(50)]
+            public TextObject _1IssueBriefQuestCrime = new TextObject("you DEFINITELY shouldn't see this..");
+
+            [SaveableField(60)]
+            public bool _targetIsFemale;
 
         }
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class LordBountyHuntingQuest : QuestBase //1-Update class name
         {
-            public LordBountyHuntingQuest(TargetWanted questGoal, string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
+            public LordBountyHuntingQuest(bool targetisFemail, TargetWanted questGoal, TargetsCrime questTargetCrime, string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
+                this._questGoal = questGoal;
+                this._questTargetCrime = questTargetCrime;
+                this._targetIsFemale = targetisFemail;
                 this.PrepTargetVillage();
+                this.CreateTargetCharacter();
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
                 TextObject log = new TextObject("Go look for the target at: {TARGET_SETTLEMENT.LINK}");
@@ -274,7 +323,7 @@ namespace LordBountyHunting
 
             private DialogFlow targetDialog()
             {
-                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start").NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero).
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero).
                     PlayerLine("complete quest").Consequence( delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
 
                 return resultFlow;
@@ -322,17 +371,41 @@ namespace LordBountyHunting
                     else
                     {
                         this._targetLocationId = settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();
-                        this.createTargetCharacter();
                         this._targetLocationId.AddCharacter(this._targetLocChar);
                     }
                 }
             }
 
-            private void createTargetCharacter()
-            {
-                this._targetHero = HeroCreator.CreateSpecialHero((from charTemp in CharacterObject.Templates where
-                                                                charTemp.Culture == base.QuestGiver.Culture &&
-                                                                charTemp.Age >= 16 select charTemp).GetRandomElement<CharacterObject>());
+            private void CreateTargetCharacter()
+            {                
+                Random rand = new Random();
+                //bool targetIsSoldier = this._questTargetCrime == TargetsCrime.Deserter;
+                bool targetIsRanged = false; //need to determine any way/reason to implement this.
+                int targetAge = rand.Next(targetMinAge, targetMaxAge);
+
+                //foreach(CharacterObject charTemp in CharacterObject.Templates)
+                //{
+                //    InformationManager.DisplayMessage(new InformationMessage(charTemp.StringId));
+                //}
+
+                if(this._questTargetCrime == TargetsCrime.Deserter)
+                {
+                    this._targetHero = HeroCreator.CreateSpecialHero(CharacterObject.All.First((CharacterObject x) => x.StringId == "guard_" + base.QuestGiver.Culture.StringId));
+                }
+                else
+                {
+                    this._targetHero = HeroCreator.CreateSpecialHero((from charTemp in CharacterObject.All
+                                                                      where
+                                               charTemp.Culture == base.QuestGiver.Culture &&
+                                               charTemp.Occupation == Occupation.Wanderer &&
+                                               charTemp.IsFemale == this._targetIsFemale
+                                                                      select charTemp).GetRandomElement<CharacterObject>()) ;
+                }
+
+
+                //this._targetHero = HeroCreator.CreateSpecialHero(MBObjectManager.Instance.GetObject<CharacterObject>(,));
+
+
 
                 this._targetHero.Name = new TextObject("target");
 
@@ -344,8 +417,18 @@ namespace LordBountyHunting
                 AgentData agentData = new AgentData(new SimpleAgentOrigin(this._targetHero.CharacterObject));
 
                 this._targetLocChar = new LocationCharacter(agentData, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
-                "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", false, false, null, false, true, true);
+                "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", targetForceCivilianEquip, false, null, false, false, true);
+
+                this._targetLocationId = this.TargetVillage.Settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();
             }
+
+            //private void ChooseTargetProperties()
+            //{
+            //    Hero charTemplate = new Hero();
+            //    charTemplate.IsFemale = false;
+
+            //    //return charTemplate;
+            //}
 
             private void PrepTargetVillage()
             {
@@ -428,6 +511,21 @@ namespace LordBountyHunting
             private void FailureComplete()
             {
                 base.CompleteQuestWithFail();
+            }            
+
+            int targetMinAge
+            {
+                get => 16;
+            }
+
+            int targetMaxAge
+            {
+                get => 42;
+            }
+
+            bool targetForceCivilianEquip
+            {
+                get => true;
             }
 
             [SaveableField(10)]
@@ -441,6 +539,15 @@ namespace LordBountyHunting
 
             [SaveableField(40)]
             public Location _targetLocationId;
+
+            [SaveableField(50)]
+            public TargetWanted _questGoal;
+
+            [SaveableField(60)]
+            public TargetsCrime _questTargetCrime;
+
+            [SaveableField(70)]
+            public bool _targetIsFemale;
         }
     }
 }
