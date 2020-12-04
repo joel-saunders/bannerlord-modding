@@ -123,6 +123,11 @@ namespace LordBountyHunting
                 }
                 InformationManager.DisplayMessage(new InformationMessage("Wanted: "+this.questGoal.ToString()));
                 InformationManager.DisplayMessage(new InformationMessage("For the crime of: " + this.questTargetCrime.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage("Random weapon: " + (from temp in ItemObject.All
+                                                                                              where
+                                                                                              temp.WeaponComponent != null &&
+                                                                                              temp.ItemType == ItemObject.ItemTypeEnum.TwoHandedWeapon
+                                                                                              select temp).GetRandomElement<ItemObject>().ToString())) ;
             }
 
             public TargetWanted DecideTargetGoal()
@@ -171,7 +176,7 @@ namespace LordBountyHunting
                 }
                 else
                 {
-                    this._targetIsFemale = rand.Next(0, 2) > 0;
+                    this._targetIsFemale = rand.Next(0, 5) == 2;
                 }
             }
 
@@ -383,12 +388,18 @@ namespace LordBountyHunting
                 bool targetIsRanged = false; //need to determine any way/reason to implement this.
                 int targetAge = rand.Next(targetMinAge, targetMaxAge);
 
+                SkillObject skill = (from temp in ItemObject.All
+                 where
+                 temp.WeaponComponent != null &&
+                 temp.ItemType == ItemObject.ItemTypeEnum.TwoHandedWeapon
+                 select temp).GetRandomElement<ItemObject>().RelevantSkill;
+
                 //foreach(CharacterObject charTemp in CharacterObject.Templates)
                 //{
                 //    InformationManager.DisplayMessage(new InformationMessage(charTemp.StringId));
                 //}
 
-                if(this._questTargetCrime == TargetsCrime.Deserter)
+                if (this._questTargetCrime == TargetsCrime.Deserter)
                 {
                     this._targetHero = HeroCreator.CreateSpecialHero(CharacterObject.All.First((CharacterObject x) => x.StringId == "guard_" + base.QuestGiver.Culture.StringId));
                 }
