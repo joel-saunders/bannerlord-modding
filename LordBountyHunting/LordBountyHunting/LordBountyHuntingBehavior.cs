@@ -24,6 +24,7 @@ using TaleWorlds.SaveSystem;
 using TaleWorlds.CampaignSystem.SandBox.Issues;
 using NetworkMessages.FromServer;
 using TaleWorlds.ObjectSystem;
+using TaleWorlds.Library;
 
 namespace LordBountyHunting
 {
@@ -53,8 +54,7 @@ namespace LordBountyHunting
         private bool ConditionsHold(Hero issueGiver) //2-Define Issue conditions
         {
             return issueGiver.IsHeadman && !issueGiver.IsOccupiedByAnEvent() && issueGiver.CurrentSettlement.IsVillage && 
-                issueGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Count >= 1 &&
-                issueGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Any((Village settl)=> !settl.Settlement.IsUnderRaid && !settl.Settlement.IsRaided); 
+                                issueGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Any((Village settl)=> !settl.Settlement.IsUnderRaid && !settl.Settlement.IsRaided && settl != issueGiver.CurrentSettlement.Village); 
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
@@ -123,11 +123,7 @@ namespace LordBountyHunting
                 }
                 InformationManager.DisplayMessage(new InformationMessage("Wanted: "+this.questGoal.ToString()));
                 InformationManager.DisplayMessage(new InformationMessage("For the crime of: " + this.questTargetCrime.ToString()));
-                InformationManager.DisplayMessage(new InformationMessage("Random weapon: " + (from temp in ItemObject.All
-                                                                                              where
-                                                                                              temp.WeaponComponent != null &&
-                                                                                              temp.ItemType == ItemObject.ItemTypeEnum.TwoHandedWeapon
-                                                                                              select temp).GetRandomElement<ItemObject>().ToString())) ;
+                
             }
 
             public TargetWanted DecideTargetGoal()
@@ -256,7 +252,7 @@ namespace LordBountyHunting
             {
                 InformationManager.DisplayMessage(new InformationMessage("***Quest is generated"));
 
-                return new LordBountyHuntingBehavior.LordBountyHuntingQuest(this._targetIsFemale, this.questGoal, this.questTargetCrime, questId, base.IssueOwner, //1-Update class name
+                return new LordBountyHuntingBehavior.LordBountyHuntingQuest(this.IssueDifficultyMultiplier, this._targetIsFemale, this.questGoal, this.questTargetCrime, questId, base.IssueOwner, //1-Update class name
                     CampaignTime.DaysFromNow(17f), RewardGold);
             }
 
@@ -287,14 +283,16 @@ namespace LordBountyHunting
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class LordBountyHuntingQuest : QuestBase //1-Update class name
         {
-            public LordBountyHuntingQuest(bool targetisFemail, TargetWanted questGoal, TargetsCrime questTargetCrime, string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
+            public LordBountyHuntingQuest(float questDifficulty, bool targetisFemail, TargetWanted questGoal, TargetsCrime questTargetCrime, string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this._questGoal = questGoal;
                 this._questTargetCrime = questTargetCrime;
                 this._targetIsFemale = targetisFemail;
+                this._questDifficulty = questDifficulty;
                 this.PrepTargetVillage();
                 this.CreateTargetCharacter();
+                this.PrepTargetDialog();
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
                 TextObject log = new TextObject("Go look for the target at: {TARGET_SETTLEMENT.LINK}");
@@ -322,17 +320,56 @@ namespace LordBountyHunting
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
                     NpcLine("TEMPLATE: Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
-                Campaign.Current.ConversationManager.AddDialogFlow(this.targetDialog());
+                Campaign.Current.ConversationManager.AddDialogFlow(this.targetDialogFlow);
             }
             // </Required overrides
 
-            private DialogFlow targetDialog()
+            private void PrepTargetDialog()
             {
-                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero).
+                switch(this._questTargetCrime)
+                {
+                    case TargetsCrime.Deserter:
+                        this.targetDialogFlow = TargetDeserterDialog();
+                        break;
+                    case TargetsCrime.Murder:
+                        this.targetDialogFlow = TargetMurdererDialog();
+                        break;
+                    case TargetsCrime.Thief:
+                        this.targetDialogFlow = TargetThiefDialog();
+                        break;
+                }
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero && !base.IsFinalized).
+                    PlayerLine("why did you do it.").
                     PlayerLine("complete quest").Consequence( delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
+
+                //this.targetDialogFlow = resultFlow;
+            }
+
+            private DialogFlow TargetDeserterDialog()
+            {
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero && !base.IsFinalized).
+                    PlayerLine("why did you DESERT.").
+                    PlayerLine("complete quest").Consequence(delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
 
                 return resultFlow;
             }
+            private DialogFlow TargetMurdererDialog()
+            {
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero && !base.IsFinalized).
+                    PlayerLine("why did you Murder.").
+                    PlayerLine("complete quest").Consequence(delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
+
+                return resultFlow;
+            }
+            private DialogFlow TargetThiefDialog()
+            {
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && Hero.OneToOneConversationHero == this._targetHero && !base.IsFinalized).
+                    PlayerLine("why did you Steal...").
+                    PlayerLine("complete quest").Consequence(delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
+
+                return resultFlow;
+            }
+            
             // Optional Overrides (virtual)
             protected override void RegisterEvents()
             {
@@ -361,23 +398,35 @@ namespace LordBountyHunting
             }
 
             private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
-            {                
+            {
                 //foreach(Location loc in settlement.LocationComplex.GetListOfLocations())
                 //{
                 //    InformationManager.DisplayMessage(new InformationMessage(loc.Name.ToString()));
-                //}
+                //}                
+
+                InformationManager.DisplayMessage(new InformationMessage("target location: " + this._targetLocChar.Character.Name.ToString()));
+
+                foreach (Location loc in this.TargetVillage.Settlement.LocationComplex.GetListOfLocations())
+                {
+                    InformationManager.DisplayMessage(new InformationMessage("Locations: "+loc.Name.ToString()));
+                    
+                }
+
+                //InformationManager.DisplayMessage(new InformationMessage("Characters: "+settlement.LocationComplex.GetListOfCharacters() .ToString()));
                 if (party != null && this.TargetVillage != null && party.IsMainParty && settlement.IsVillage && settlement.Village == this.TargetVillage)
                 {
                     InformationManager.DisplayMessage(new InformationMessage("Hey, this seems to be the right village. TEST"));
                     if (this._targetLocChar != null)
                     {
                         this._targetLocationId.AddCharacter(this._targetLocChar);
+                        InformationManager.DisplayMessage(new InformationMessage("target hidden: "+this._targetLocChar.IsHidden));
+                        InformationManager.DisplayMessage(new InformationMessage("target visible: " + this._targetLocChar.IsVisualTracked));
                     }
-                    else
-                    {
-                        this._targetLocationId = settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();
-                        this._targetLocationId.AddCharacter(this._targetLocChar);
-                    }
+                    //else
+                    //{
+                    //    this._targetLocationId = settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();
+                    //    this._targetLocationId.AddCharacter(this._targetLocChar);
+                    //}
                 }
             }
 
@@ -387,12 +436,36 @@ namespace LordBountyHunting
                 //bool targetIsSoldier = this._questTargetCrime == TargetsCrime.Deserter;
                 bool targetIsRanged = false; //need to determine any way/reason to implement this.
                 int targetAge = rand.Next(targetMinAge, targetMaxAge);
+                int weaponTier;
+                BasicCharacterObject charOb = base.QuestGiver.Culture.Townsman;
+                charOb.Name = new TextObject("TARGET");
+                //Hero testhero = new Hero();
+                
+                //HeroCreator.CreateBasicHero(charOb, testhero);
 
-                SkillObject skill = (from temp in ItemObject.All
-                 where
-                 temp.WeaponComponent != null &&
-                 temp.ItemType == ItemObject.ItemTypeEnum.TwoHandedWeapon
-                 select temp).GetRandomElement<ItemObject>().RelevantSkill;
+
+                if (this._questDifficulty < .2f)
+                {
+                    weaponTier = 0; //tier 1
+                } else if (this._questDifficulty < .4f)
+                {
+                    weaponTier = 2;
+                }
+                else
+                {
+                    weaponTier = 3;
+                }
+
+
+                //Dictionary <ItemObject.ItemTypeEnum, float> availableWeaponTypes = new Dictionary<ItemObject.ItemTypeEnum, float>()
+                //    {
+                //        { ItemObject.ItemTypeEnum.OneHandedWeapon, 1.0f},
+                //        { ItemObject.ItemTypeEnum.TwoHandedWeapon, 1.0f},
+                //        { ItemObject.ItemTypeEnum.Polearm, 1.0f},
+                //        { ItemObject.ItemTypeEnum.Thrown, 1.0f}
+                //    };
+
+                //rand.Next(0, (int)availableWeaponTypes.Values.Sum());
 
                 //foreach(CharacterObject charTemp in CharacterObject.Templates)
                 //{
@@ -402,44 +475,77 @@ namespace LordBountyHunting
                 if (this._questTargetCrime == TargetsCrime.Deserter)
                 {
                     this._targetHero = HeroCreator.CreateSpecialHero(CharacterObject.All.First((CharacterObject x) => x.StringId == "guard_" + base.QuestGiver.Culture.StringId));
+                    this.targetForceCivilianEquip = false;
                 }
                 else
                 {
+                    List<ItemObject.ItemTypeEnum> weaponTypes = new List<ItemObject.ItemTypeEnum>()
+                    { 
+                        ItemObject.ItemTypeEnum.OneHandedWeapon,
+                        ItemObject.ItemTypeEnum.TwoHandedWeapon,
+                        ItemObject.ItemTypeEnum.Polearm
+                    };
+
+                    //Pick random weapon type
+                    ItemObject.ItemTypeEnum targetWeaponType = weaponTypes.GetRandomElement<ItemObject.ItemTypeEnum>();
+                    InformationManager.DisplayMessage(new InformationMessage("Weapon Type: "+targetWeaponType.ToString()));
+
+                    //create hero template
                     this._targetHero = HeroCreator.CreateSpecialHero((from charTemp in CharacterObject.All
                                                                       where
                                                charTemp.Culture == base.QuestGiver.Culture &&
                                                charTemp.Occupation == Occupation.Wanderer &&
                                                charTemp.IsFemale == this._targetIsFemale
-                                                                      select charTemp).GetRandomElement<CharacterObject>()) ;
+                                                                      select charTemp).GetRandomElement<CharacterObject>()) ;                    
+                    //pick random weapon
+                    ItemObject targetWeapon = new ItemObject((from temp in ItemObject.All
+                                               where
+                                               temp.WeaponComponent != null &&
+                                               temp.ItemType == targetWeaponType &&
+                                               temp.Tier == (ItemObject.ItemTiers)weaponTier
+                                               //temp.Culture == base.QuestGiver.Culture
+                                               select temp).GetRandomElement<ItemObject>());
+                    this.targetForceCivilianEquip = false; // targetWeapon.IsCivilian;                    
+
+                    EquipmentElement targetWeaponEquipment = new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>(targetWeapon.StringId), null);
+
+                    //float weaponSkillToAdd = //targetWeapon.Item.RelevantSkill
+                    this._targetHero.AddSkillXp(targetWeapon.RelevantSkill, 200f * this._questDifficulty);
+                    InformationManager.DisplayMessage(new InformationMessage("Target's Weapon: "+targetWeapon.ToString()));
+                    //give weapon to target
+                    
+                    this._targetHero.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
+
+                    MBReadOnlyList<Equipment> equipList = charOb.AllEquipments;
+
+                    charOb.InitializeEquipmentsOnLoad(equipList);
                 }
 
+                
 
-                //this._targetHero = HeroCreator.CreateSpecialHero(MBObjectManager.Instance.GetObject<CharacterObject>(,));
-
-
-
-                this._targetHero.Name = new TextObject("target");
+                this._targetHero.Name = NameGenerator.Current.GenerateHeroFirstName(this._targetHero, false);
+                this._targetHero.AddEventForOccupiedHero(base.StringId);
+                
+                InformationManager.DisplayMessage(new InformationMessage("item in 0 slot: "+this._targetHero.CivilianEquipment.GetEquipmentFromSlot((EquipmentIndex)0).ToString()));
 
                 InformationManager.DisplayMessage(new InformationMessage("Age: "+this._targetHero.Age.ToString()));
                 InformationManager.DisplayMessage(new InformationMessage("Culture: "+this._targetHero.CharacterObject.Culture));
                 InformationManager.DisplayMessage(new InformationMessage("Tier: "+this._targetHero.CharacterObject.Tier.ToString()));
 
 
-                AgentData agentData = new AgentData(new SimpleAgentOrigin(this._targetHero.CharacterObject));
+                //AgentData agentData = new AgentData(new SimpleAgentOrigin(this._targetHero.CharacterObject));
+
+                
+
+                AgentData agentData = new AgentData(new SimpleAgentOrigin(charOb));
 
                 this._targetLocChar = new LocationCharacter(agentData, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
-                "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", targetForceCivilianEquip, false, null, false, false, true);
+                "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", true, false, null, false, false, true);
 
-                this._targetLocationId = this.TargetVillage.Settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();
+                this._targetLocationId = this.TargetVillage.Settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();                
+                
             }
-
-            //private void ChooseTargetProperties()
-            //{
-            //    Hero charTemplate = new Hero();
-            //    charTemplate.IsFemale = false;
-
-            //    //return charTemplate;
-            //}
+            
 
             private void PrepTargetVillage()
             {
@@ -452,7 +558,7 @@ namespace LordBountyHunting
                 }
 
                 //this.TargetVillage = villageList.ElementAt(rand.Next((int)villageList.Count()));
-                this.TargetVillage = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted).GetRandomElement<Village>();
+                this.TargetVillage = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted && settl != base.QuestGiver.CurrentSettlement.Village).GetRandomElement<Village>();
             }
 
             public override bool IsQuestGiverHidden => false;
@@ -524,6 +630,10 @@ namespace LordBountyHunting
                 base.CompleteQuestWithFail();
             }            
 
+            enum QuestWeaponType
+            {
+                testthing = ItemObject.ItemTypeEnum.TwoHandedWeapon
+            }
             int targetMinAge
             {
                 get => 16;
@@ -532,13 +642,8 @@ namespace LordBountyHunting
             int targetMaxAge
             {
                 get => 42;
-            }
-
-            bool targetForceCivilianEquip
-            {
-                get => true;
-            }
-
+            }            
+            
             [SaveableField(10)]
             public Village TargetVillage;
 
@@ -559,6 +664,15 @@ namespace LordBountyHunting
 
             [SaveableField(70)]
             public bool _targetIsFemale;
+
+            [SaveableField(80)]
+            public float _questDifficulty;
+
+            [SaveableField(90)]
+            public bool targetForceCivilianEquip;
+
+            [SaveableField(100)]
+            public DialogFlow targetDialogFlow;
         }
     }
 }
