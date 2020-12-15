@@ -292,12 +292,12 @@ namespace LordBountyHunting
         //Quest class. For the most part, takes over the quest process after IssueBase.GenerateIssueQuest is called
         internal class LordBountyHuntingQuest : QuestBase //1-Update class name
         {
-            public LordBountyHuntingQuest(float questDifficulty, bool targetisFemale, TargetWanted questGoal, TargetsCrime questTargetCrime, string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
+            public LordBountyHuntingQuest(float questDifficulty, bool targetisFemail, TargetWanted questGoal, TargetsCrime questTargetCrime, string questId, Hero questGiver, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold) //1-Update class name
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
                 this._questGoal = questGoal;
                 this._questTargetCrime = questTargetCrime;
-                this._targetIsFemale = targetisFemale;
+                this._targetIsFemale = targetisFemail;
                 this._questDifficulty = questDifficulty;
                 this.PrepTargetVillage();
                 this.CreateTargetCharacter();
@@ -326,7 +326,7 @@ namespace LordBountyHunting
             {
                 TextObject villageText = new TextObject("{VILLAGE.LINK}");
                 TextObject targetName = new TextObject("{TARGET}");
-                targetName.SetCharacterProperties("TARGET",this._targetChar);
+                targetName.SetCharacterProperties("TARGET",this._targetHero.CharacterObject);
                 StringHelpers.SetSettlementProperties("VILLAGE", this.TargetVillage.Settlement, villageText);
 
                 this.OfferDialogFlow = DialogFlow.CreateDialogFlow("issue_classic_quest_start", 200). //3-Update quest acceptance text
@@ -375,7 +375,7 @@ namespace LordBountyHunting
 
             private DialogFlow TargetDeserterDialog(pbSuspect susp)
             {
-                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetChar != null && (CharacterObject.OneToOneConversationCharacter == this._targetChar || this.travellerHeros.Contains(Hero.OneToOneConversationHero)) && !base.IsFinalized).BeginPlayerOptions().
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && (Hero.OneToOneConversationHero == this._targetHero || this.travellerHeros.Contains(Hero.OneToOneConversationHero)) && !base.IsFinalized).BeginPlayerOptions().
                     PlayerOption("why did you DESERT.").CloseDialog().
                     PlayerOption("complete quest").Consequence(delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
 
@@ -383,7 +383,7 @@ namespace LordBountyHunting
             }
             private DialogFlow TargetMurdererDialog(pbSuspect susp)
             {
-                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetChar != null && (CharacterObject.OneToOneConversationCharacter == this._targetChar || this.travellerHeros.Contains(Hero.OneToOneConversationHero)) && !base.IsFinalized).BeginPlayerOptions().
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && (Hero.OneToOneConversationHero == this._targetHero || this.travellerHeros.Contains(Hero.OneToOneConversationHero)) && !base.IsFinalized).BeginPlayerOptions().
                     PlayerOption("why did you Murder.").CloseDialog().
                     PlayerOption("complete quest").Consequence(delegate { base.CompleteQuestWithSuccess(); }).CloseDialog();
 
@@ -392,27 +392,27 @@ namespace LordBountyHunting
             private DialogFlow TargetThiefDialog(pbSuspect susp, String dialogId)
             {
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).BeginNpcOptions().
-                    NpcOption("Hey there!", () => CharacterObject.OneToOneConversationCharacter == susp.CharObject && susp.introductionDone && !base.IsFinalized).GotoDialogState(dialogId).
-                    NpcOption("Hello again!", () => CharacterObject.OneToOneConversationCharacter == susp.CharObject && !base.IsFinalized).GotoDialogState(dialogId).GoBackToDialogState(dialogId).
+                    NpcOption("Hey there!", () => !Hero.OneToOneConversationHero.HasMet && Hero.OneToOneConversationHero == susp.HeroObject && !base.IsFinalized).GotoDialogState(dialogId).
+                    NpcOption("Hello again!", () => Hero.OneToOneConversationHero.HasMet && Hero.OneToOneConversationHero == susp.HeroObject && !base.IsFinalized).GotoDialogState(dialogId).GoBackToDialogState(dialogId).
                     BeginPlayerOptions().
                         //Ask basic questions
-                        PlayerOption("Hello stranger, what's your name?").Condition(() => !this.GetSuspect(CharacterObject.OneToOneConversationCharacter).introductionDone).Consequence(delegate
+                        PlayerOption("Hello stranger, what's your name?").Condition(() => !this.GetSuspect(Hero.OneToOneConversationHero).introductionDone).Consequence(delegate
                         {
-                            this.GetSuspect(CharacterObject.OneToOneConversationCharacter).CompleteIntroduction();
+                            this.GetSuspect(Hero.OneToOneConversationHero).CompleteIntroduction();
                         }).
                         NpcLine("Sure, my name is " + susp.Name).PlayerLine("And what brings you to this place?").
                         NpcLine(susp.backgroundDialog).NpcLine("Is there anything else?").GotoDialogState(dialogId).
-                        PlayerOption("Hello again blank, what is it again that youre doing here?").Condition(() => this.GetSuspect(CharacterObject.OneToOneConversationCharacter).introductionDone).NpcLine(susp.backgroundDialog).
+                        PlayerOption("Hello again blank, what is it again that youre doing here?").Condition(() => this.GetSuspect(Hero.OneToOneConversationHero).introductionDone).NpcLine(susp.backgroundDialog).
                         NpcLine("Is there anything else?").GotoDialogState(dialogId).
                         //State what your here doing
                         PlayerOption("I'm currently looking for someone named blank, have you heard of them?").
                         //Acuse suspect of being the criminal
                         PlayerOption("You know why I'm here, blank. Don't make this difficult").BeginNpcOptions().
-                            NpcOption("Please don't hurt me, I'll come quietly", () => CharacterObject.OneToOneConversationCharacter == this._targetChar && this.GetSuspect(this._targetChar).personality == pbSuspect.PersonalityType.Scared).BeginPlayerOptions().
-                                PlayerOption("I need your head!").Consequence(delegate { this.fight_traveller_consequence(CharacterObject.OneToOneConversationCharacter); }).CloseDialog().
+                            NpcOption("Please don't hurt me, I'll come quietly", () => Hero.OneToOneConversationHero == this._targetHero && this.GetSuspect(this._targetHero).personality == pbSuspect.PersonalityType.Scared).BeginPlayerOptions().
+                                PlayerOption("I need your head!").Consequence(delegate { this.fight_traveller_consequence(Hero.OneToOneConversationHero); }).CloseDialog().
                                 PlayerOption("Sorry, I must have been mistaken.").NpcLine("Oh, uh.. ok. Is there anything else?").GotoDialogState(dialogId).EndPlayerOptions().
-                            NpcOption("What are you talking about?", () => this._suspectList.Contains(GetSuspect(CharacterObject.OneToOneConversationCharacter))).BeginPlayerOptions().
-                                PlayerOption("Don't play stupid, defend yourself!").Consequence(delegate { this.fight_traveller_consequence(CharacterObject.OneToOneConversationCharacter); }).CloseDialog().
+                            NpcOption("What are you talking about?", () => this._suspectList.Contains(GetSuspect(Hero.OneToOneConversationHero))).BeginPlayerOptions().
+                                PlayerOption("Don't play stupid, defend yourself!").Consequence(delegate { this.fight_traveller_consequence(Hero.OneToOneConversationHero); }).CloseDialog().
                                 PlayerOption("Sorry, I must have been mistaken.").NpcLine("Oh, uh.. ok. Is there anything else?").GotoDialogState(dialogId).EndPlayerOptions().EndNpcOptions().
                     //Leave conversation
                         PlayerOption("Never mind, I need to go now.").CloseDialog().
@@ -422,9 +422,9 @@ namespace LordBountyHunting
                 return resultFlow;
             }            
 
-            private void fight_traveller_consequence(CharacterObject charOb)
+            private void fight_traveller_consequence(Hero hero)
             {
-                this._chosenChar = charOb;
+                this._chosenHero = hero;
                 Campaign.Current.ConversationManager.ConversationEndOneShot += this.PlayerFightsTraveller;
             }
 
@@ -450,7 +450,7 @@ namespace LordBountyHunting
             {
                 if(isplayersidewon)
                 {
-                    if(this._targetChar == this._chosenChar)
+                    if(this._targetHero == this._chosenHero)
                     {
                         base.AddLog(new TextObject("you defeated the target!"));
                         base.CompleteQuestWithSuccess();
@@ -500,14 +500,14 @@ namespace LordBountyHunting
             private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
             {
 
-                InformationManager.DisplayMessage(new InformationMessage( Campaign.Current.VisualTrackerManager.CheckTracked(this._targetChar).ToString()));
+                InformationManager.DisplayMessage(new InformationMessage( Campaign.Current.VisualTrackerManager.CheckTracked(this._targetHero.CharacterObject).ToString()));
 
                 if (party != null && this.TargetVillage != null && party.IsMainParty && settlement.IsVillage && settlement.Village == this.TargetVillage)
                 {
                     InformationManager.DisplayMessage(new InformationMessage("Hey, this seems to be the right village. TEST"));
                     if (this._targetLocChar != null)
                     {
-                        //base.RemoveTrackedObject(this._targetChar);
+                        base.RemoveTrackedObject(this._targetHero);
                         this._targetLocationId.AddCharacter(this._targetLocChar);
                         foreach(LocationCharacter locCh in this.traverllerLocChars)
                         {
@@ -595,32 +595,32 @@ namespace LordBountyHunting
                                                           select temp).GetRandomElement<ItemObject>());
 
                 pbSuspect suspect = new pbSuspect(this);
-                this._targetChar = suspect.CharObject;
+                this._targetHero = suspect.HeroObject;
 
-                this._targetChar.Name = new TextObject("XXXTraveller");
-                    //NameGenerator.Current.GenerateHeroFirstName(this._targetChar, false);
-                //this._targetChar.AddEventForOccupiedHero(base.StringId);
+                this._targetHero.Name = new TextObject("XXXTraveller");
+                    //NameGenerator.Current.GenerateHeroFirstName(this._targetHero, false);
+                this._targetHero.AddEventForOccupiedHero(base.StringId);
 
                 this._suspectList.Add(suspect);
 
                 EquipmentElement targetWeaponEquipment = new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>(targetWeapon.StringId), null);
 
                 //float weaponSkillToAdd = //targetWeapon.Item.RelevantSkill
-                this._targetChar.SetSkillValue(targetWeapon.RelevantSkill, 200); //this._questDifficulty);
-
+                this._targetHero.AddSkillXp(targetWeapon.RelevantSkill, 200f * this._questDifficulty);
+                
                 //give weapon to target
-                this._targetChar.Equipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
-                //this._targetChar.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
 
-                InformationManager.DisplayMessage(new InformationMessage("item in 0 slot: "+this._targetChar.Equipment.GetEquipmentFromSlot((EquipmentIndex)0).ToString()));
+                this._targetHero.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
+
+                InformationManager.DisplayMessage(new InformationMessage("item in 0 slot: "+this._targetHero.CivilianEquipment.GetEquipmentFromSlot((EquipmentIndex)0).ToString()));
 
                 InformationManager.DisplayMessage(new InformationMessage("Target Background: "+suspect.Properties.background.ToString()));
                 InformationManager.DisplayMessage(new InformationMessage("Target is a woman: "+suspect.Properties.isFemale.ToString()));
                 InformationManager.DisplayMessage(new InformationMessage("Target Personality: "+suspect.Properties.personality.ToString()));
                 InformationManager.DisplayMessage(new InformationMessage("Target's Weapon: "+targetWeaponType.ToString()));
-                InformationManager.DisplayMessage(new InformationMessage("Hair: " + suspect.CharObject.HairTags));
+                InformationManager.DisplayMessage(new InformationMessage("Hair: " + suspect.HeroObject.HairTags));
 
-                AgentData agentData = new AgentData(new SimpleAgentOrigin(this._targetChar));
+                AgentData agentData = new AgentData(new SimpleAgentOrigin(this._targetHero.CharacterObject));
                 
                 this._targetLocChar = new LocationCharacter(agentData, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
                 "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", true, false, null, false, false, true);
@@ -666,18 +666,18 @@ namespace LordBountyHunting
                     //                           charTemp.IsFemale == travellerFemale
                     //                                                  select charTemp).GetRandomElement<CharacterObject>());
 
-                    pbSuspect suspect = new pbSuspect(this, GetSuspect(this._targetChar));
+                    pbSuspect suspect = new pbSuspect(this, GetSuspect(this._targetHero));
                     this._suspectList.Add(suspect);
 
-                    InformationManager.DisplayMessage(new InformationMessage("Hair: " + suspect.CharObject.HairTags));
-                    CharacterObject travellerCharacter = suspect.CharObject;
+                    InformationManager.DisplayMessage(new InformationMessage("Hair: " + suspect.HeroObject.HairTags));
+                    Hero travellerHero = suspect.HeroObject;
 
-                    travellerCharacter.Name = new TextObject("Traveller");
+                    travellerHero.Name = new TextObject("Traveller");
 
                     //base.RemoveTrackedObject(travellerHero);
                     //Campaign.Current.VisualTrackerManager.RemoveTrackedObject(travellerHero);                                        
 
-                    AgentData travellerAgent = new AgentData(new SimpleAgentOrigin(travellerCharacter));
+                    AgentData travellerAgent = new AgentData(new SimpleAgentOrigin(travellerHero.CharacterObject));
 
                     LocationCharacter travellerLocChar = new LocationCharacter(travellerAgent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
                 "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", true, false, null, false, false, true);
@@ -693,9 +693,9 @@ namespace LordBountyHunting
                 InformationManager.DisplayMessage(new InformationMessage("Go to: "+this.TargetVillage.Name.ToString()));
             }
 
-            private pbSuspect GetSuspect(CharacterObject charOb)
+            private pbSuspect GetSuspect(Hero hero)
             {
-                return this._suspectList.Find((pbSuspect sus) => sus.CharObject == charOb);
+                return this._suspectList.Find((pbSuspect sus) => sus.HeroObject == hero);
             }
 
             public override bool IsQuestGiverHidden => false;
@@ -785,7 +785,7 @@ namespace LordBountyHunting
             public Village TargetVillage;
 
             [SaveableField(20)]
-            public CharacterObject _targetChar;
+            public Hero _targetHero;
 
             [SaveableField(30)]
             public LocationCharacter _targetLocChar;
@@ -824,7 +824,7 @@ namespace LordBountyHunting
             public TextObject _targetName;
 
             [SaveableField(150)]
-            public CharacterObject _chosenChar;
+            public Hero _chosenHero;
         }
     }
 }

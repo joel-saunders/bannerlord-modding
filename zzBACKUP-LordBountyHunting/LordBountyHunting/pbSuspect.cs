@@ -136,25 +136,26 @@ namespace LordBountyHunting
             this.Properties = new pbSuspectProperties(targetSuspect);            
             if(targetSuspect == null)
             {
-                //this.HeroObject = new Hero();
-                this.CharObject = CharacterObject.All.GetRandomElement<CharacterObject>();
-
-                //this.HeroObject = HeroCreator.CreateSpecialHero((from charO in CharacterObject.All
-                //                                                 where
-                //           charO.Culture == this.CurrentQuest.QuestGiver.Culture &&
-                //           charO.IsFemale == this.Properties.isFemale 
-                //           //charO.Occupation == Occupation.
-                //           //charO.IsBasicTroop &&
-                //           //charO.Tier == 5
+                this.HeroObject = HeroCreator.CreateSpecialHero((from charO in CharacterObject.All
+                                                                 where
+                           charO.Culture == this.CurrentQuest.QuestGiver.Culture &&
+                           charO.IsFemale == this.Properties.isFemale 
+                           //charO.Occupation == Occupation.
+                           //charO.IsBasicTroop &&
+                           //charO.Tier == 5
                            
-                //                                                 select charO).GetRandomElement<CharacterObject>());
+                                                                 select charO).GetRandomElement<CharacterObject>());
             }
             else
             {
-                this.CharObject = CharacterObject.All.GetRandomElement<CharacterObject>();
+                this.HeroObject = HeroCreator.CreateSpecialHero((from charO in CharacterObject.All
+                                                                 where
+                           charO.Culture == this.CurrentQuest.QuestGiver.Culture &&
+                           charO.IsFemale == this.Properties.isFemale                           
+                                                                 select charO).GetRandomElement<CharacterObject>());
             }
             
-            this.Name = NameGenerator.Current.GenerateHeroFirstName( new Hero(), false);
+            this.Name = NameGenerator.Current.GenerateHeroFirstName(this.HeroObject, false);
             this.personality = new List<PersonalityType>() {PersonalityType.Aggresive, PersonalityType.Dismissive, PersonalityType.Scared }.GetRandomElement(); 
             this.background = new List<Background>() { Background.Wanderer, Background.Trader, Background.Mercanary }.GetRandomElement();
             this.introductionDone = false;
@@ -163,7 +164,7 @@ namespace LordBountyHunting
 
         public void CompleteIntroduction()
         {
-            this.CharObject.Name = this.Name;
+            this.HeroObject.Name = this.Name;
             this.introductionDone = true;
 
         }
@@ -192,8 +193,8 @@ namespace LordBountyHunting
         [SaveableField(10)]
         public readonly LordBountyHuntingBehavior.LordBountyHuntingQuest CurrentQuest;
 
-        //[SaveableField(20)]
-        //public readonly Hero HeroObject;
+        [SaveableField(20)]
+        public readonly Hero HeroObject;
 
         [SaveableField(30)]
         public readonly PersonalityType personality;
@@ -215,8 +216,5 @@ namespace LordBountyHunting
 
         [SaveableField(90)]
         public pbSuspectProperties Properties;
-
-        [SaveableField(100)]
-        public CharacterObject CharObject;
     }
 }
