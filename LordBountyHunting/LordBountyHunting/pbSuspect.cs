@@ -45,7 +45,7 @@ namespace LordBountyHunting
 
         internal struct pbSuspectProperties
         {
-            public pbSuspectProperties(pbSuspect targetSuspect = null)
+            public pbSuspectProperties(LordBountyHuntingBehavior.LordBountyHuntingQuest quest, pbSuspect targetSuspect = null)
             {
                 if (targetSuspect == null)
                 {
@@ -54,7 +54,7 @@ namespace LordBountyHunting
 
                     this.HasScar = MBRandom.Random.Next(0, 2) == 1;
 
-                    this.isFemale = MBRandom.Random.Next(0, 3) == 1;
+                    this.isFemale = quest._questTargetCrime != LordBountyHuntingBehavior.TargetsCrime.Deserter && MBRandom.Random.Next(0, 3) == 1;
 
                     this.isBald = MBRandom.Random.Next(0, 2) == 1;
                     this.personality = new List<PersonalityType>() { PersonalityType.Aggresive, PersonalityType.Dismissive, PersonalityType.Scared }.GetRandomElement();
@@ -69,7 +69,7 @@ namespace LordBountyHunting
 
                         this.HasScar = MBRandom.Random.Next(0, 2) == 1;
 
-                        this.isFemale = MBRandom.Random.Next(0, 2) == 1;
+                        this.isFemale = quest._questTargetCrime != LordBountyHuntingBehavior.TargetsCrime.Deserter && MBRandom.Random.Next(0, 3) == 1;
 
                         this.isBald = MBRandom.Random.Next(0, 2) == 1;
                         this.personality = new List<PersonalityType>() { PersonalityType.Aggresive, PersonalityType.Dismissive, PersonalityType.Scared }.GetRandomElement();
@@ -133,12 +133,24 @@ namespace LordBountyHunting
         {
             this.CurrentQuest = quest;
 
-            this.Properties = new pbSuspectProperties(targetSuspect);            
+            this.Properties = new pbSuspectProperties(quest, targetSuspect);            
             if(targetSuspect == null)
             {
                 //this.HeroObject = new Hero();
-                this.CharObject = CharacterObject.All.GetRandomElement<CharacterObject>();
-
+                switch(this.CurrentQuest._questTargetCrime)
+                {
+                    case LordBountyHuntingBehavior.TargetsCrime.Deserter:
+                        this.CharObject = CharacterObject.All.Where((CharacterObject charO) =>
+                                                            !charO.IsHero &&
+                                                            charO.IsBasicTroop).GetRandomElement<CharacterObject>();
+                        break;
+                    case LordBountyHuntingBehavior.TargetsCrime.Murder: 
+                    case LordBountyHuntingBehavior.TargetsCrime.Thief:
+                        this.CharObject = CharacterObject.All.Where((CharacterObject charO) =>
+                                                            !charO.IsHero).GetRandomElement<CharacterObject>();
+                        break;
+                }
+                
                 //this.HeroObject = HeroCreator.CreateSpecialHero((from charO in CharacterObject.All
                 //                                                 where
                 //           charO.Culture == this.CurrentQuest.QuestGiver.Culture &&
@@ -151,10 +163,15 @@ namespace LordBountyHunting
             }
             else
             {
-                this.CharObject = CharacterObject.All.GetRandomElement<CharacterObject>();
+                this.CharObject = CharacterObject.All.Where((CharacterObject charO) =>
+                                                            !charO.IsHero).GetRandomElement<CharacterObject>();
             }
-            
-            this.Name = NameGenerator.Current.GenerateHeroFirstName( new Hero(), false);
+            Hero tempHero = HeroCreator.CreateSpecialHero((from charO in CharacterObject.All
+                                                                 where
+                                                            charO.IsHero &&
+                                                            charO.Culture == quest.QuestGiver.Culture select charO).GetRandomElement<CharacterObject>());
+
+            this.Name = NameGenerator.Current.GenerateHeroFirstName( tempHero, false);
             this.personality = new List<PersonalityType>() {PersonalityType.Aggresive, PersonalityType.Dismissive, PersonalityType.Scared }.GetRandomElement(); 
             this.background = new List<Background>() { Background.Wanderer, Background.Trader, Background.Mercanary }.GetRandomElement();
             this.introductionDone = false;

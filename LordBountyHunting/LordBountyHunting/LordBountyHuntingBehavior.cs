@@ -392,7 +392,7 @@ namespace LordBountyHunting
             private DialogFlow TargetThiefDialog(pbSuspect susp, String dialogId)
             {
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).BeginNpcOptions().
-                    NpcOption("Hey there!", () => CharacterObject.OneToOneConversationCharacter == susp.CharObject && susp.introductionDone && !base.IsFinalized).GotoDialogState(dialogId).
+                    NpcOption("Hey there!", () => CharacterObject.OneToOneConversationCharacter == susp.CharObject && !susp.introductionDone && !base.IsFinalized).GotoDialogState(dialogId).
                     NpcOption("Hello again!", () => CharacterObject.OneToOneConversationCharacter == susp.CharObject && !base.IsFinalized).GotoDialogState(dialogId).GoBackToDialogState(dialogId).
                     BeginPlayerOptions().
                         //Ask basic questions
@@ -443,7 +443,7 @@ namespace LordBountyHunting
                     targetAgent
                 };
 
-                Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, false, false, false, new MissionFightHandler.OnFightEndDelegate(this.AfterTravellerFightAction));
+                Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, true, false, false, new MissionFightHandler.OnFightEndDelegate(this.AfterTravellerFightAction));
             }
 
             private void AfterTravellerFightAction(bool isplayersidewon)
@@ -452,17 +452,20 @@ namespace LordBountyHunting
                 {
                     if(this._targetChar == this._chosenChar)
                     {
+                        Mission.Current.SetMissionMode(MissionMode.StartUp, false);
                         base.AddLog(new TextObject("you defeated the target!"));
                         base.CompleteQuestWithSuccess();
                     }
                     else
                     {
+                        Mission.Current.SetMissionMode(MissionMode.StartUp, false);
                         base.AddLog(new TextObject("Uh oh... you defeated the wrong person."));
                         base.CompleteQuestWithFail();
                     }
                 }
                 else
                 {
+                    Mission.Current.SetMissionMode(MissionMode.StartUp, false);
                     base.AddLog(new TextObject("you were defeated."));
                     base.CompleteQuestWithFail();
                 }
@@ -631,7 +634,7 @@ namespace LordBountyHunting
             
             private void CreateTravellers()
             {
-                int travellerQuantity = MBRandom.Random.Next(1, 5);
+                int travellerQuantity = 2;//MBRandom.Random.Next(1, 5);
 
                 this.traverllerLocChars = new List<LocationCharacter>();                
 
