@@ -55,7 +55,7 @@ namespace LordBountyHunting
         private bool ConditionsHold(Hero issueGiver) //2-Define Issue conditions
         {
             return issueGiver.IsHeadman && !issueGiver.IsOccupiedByAnEvent() && issueGiver.CurrentSettlement.IsVillage && 
-                                issueGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Any((Village settl)=> !settl.Settlement.IsUnderRaid && !settl.Settlement.IsRaided && settl != issueGiver.CurrentSettlement.Village); 
+                                issueGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Any((Village settl)=> !settl.Settlement.IsUnderRaid && !settl.Settlement.IsRaided && settl != issueGiver.CurrentSettlement.Village && settl.Settlement.Notables.Any((Hero headman)=> headman.IsHeadman && !headman.IsOccupiedByAnEvent())); 
         }
 
         private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
@@ -299,7 +299,7 @@ namespace LordBountyHunting
                 this._questTargetCrime = questTargetCrime;
                 this._targetIsFemale = targetisFemale;
                 this._questDifficulty = questDifficulty;
-                this.PrepTargetVillage();
+                this.PrepTargetVillage();                
                 this.CreateTargetCharacter();
                 this.CreateTravellers();
                 //this.PrepTargetDialog();
@@ -330,14 +330,15 @@ namespace LordBountyHunting
                 StringHelpers.SetSettlementProperties("VILLAGE", this.TargetVillage.Settlement, villageText);
 
                 this.OfferDialogFlow = DialogFlow.CreateDialogFlow("issue_classic_quest_start", 200). //3-Update quest acceptance text
-                    NpcLine("TEMPLATE: Good, I'm glad you've agreed to the quest. Go look through those travelling through "+villageText+" and look for "+targetName).
+                    NpcLine("TEMPLATE: Good, I'm glad you've agreed to the quest. Go look through those travelling through "+villageText+" and look for "+targetName+", and if you have any issues, talk with the Headman there").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver).
                         Consequence(QuestAcceptedConsequences).CloseDialog();
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
                     NpcLine("TEMPLATE: Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
                 this.CreateSuspectDialogs();
-                //Campaign.Current.ConversationManager.AddDialogFlow(this.targetDialogFlow);
+                Campaign.Current.ConversationManager.AddDialogFlow(this.villageHeadmanDialog());
+                this.prepVillageHeadmanDialog();
             }
             // </Required overrides
 
@@ -468,6 +469,34 @@ namespace LordBountyHunting
                     Mission.Current.SetMissionMode(MissionMode.StartUp, false);
                     base.AddLog(new TextObject("you were defeated."));
                     base.CompleteQuestWithFail();
+                }
+            }
+
+            private DialogFlow villageHeadmanDialog()
+            {
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options", 600).BeginPlayerOptions().
+                    PlayerOption("I'm actually looking for a fugitive that is believed to be your village. Do you mind if I ask you a few questions?").
+                        Condition(() => Hero.OneToOneConversationHero == this.targetVillageHeadman && !this._villageHeadmanInitialConvComplete && !base.IsFinalized).Consequence( delegate { this._villageHeadmanInitialConvComplete = true; }).
+                        NpcLine("Sure of course, I'd love to help.").
+                        NpcLine("Do you have any suspects yet?").BeginPlayerOptions().
+                        PlayerOption("No not yet. Any recomendations?").Condition(()=> !this._suspectList.Any((pbSuspect sus)=> sus.introductionDone)).NpcLine("Go talk to travellers").PlayerLine("ok will do!").CloseDialog().
+                        PlayerOption("Yes, could I see if you know them?").Condition(() => this._suspectList.Any((pbSuspect sus) => sus.introductionDone)).EndPlayerOptions().
+                        GotoDialogState("pb_bounty_traveller_options").
+                    PlayerOption("And again... If I could bug you").
+                        Condition(() => Hero.OneToOneConversationHero == this.targetVillageHeadman && this._villageHeadmanInitialConvComplete && !base.IsFinalized).
+                        NpcLine("Of course, who do you want to know about?").GotoDialogState("pb_bounty_traveller_options");
+
+                return resultFlow;
+            }
+
+            private void prepVillageHeadmanDialog()
+            {
+                int dialogCounter = 1;
+                foreach( pbSuspect sus in this._suspectList)
+                {
+                    DialogFlow resultFlow = DialogFlow.CreateDialogFlow("pb_bounty_traveller_options", 1000).GoBackToDialogState("pb_bounty_traveller_options").PlayerLine("What about "+sus.Name).Condition(() => sus.introductionDone).CloseDialog();
+
+                    Campaign.Current.ConversationManager.AddDialogFlow(resultFlow);
                 }
             }
 
@@ -693,6 +722,7 @@ namespace LordBountyHunting
             {                
                 this.TargetVillage = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted && settl != base.QuestGiver.CurrentSettlement.Village).GetRandomElement<Village>();
 
+                this.targetVillageHeadman = this.TargetVillage.Settlement.Notables.First((Hero x) => x.IsHeadman);
                 InformationManager.DisplayMessage(new InformationMessage("Go to: "+this.TargetVillage.Name.ToString()));
             }
 
@@ -828,6 +858,12 @@ namespace LordBountyHunting
 
             [SaveableField(150)]
             public CharacterObject _chosenChar;
+
+            [SaveableField(160)]
+            private bool _villageHeadmanInitialConvComplete;
+
+            [SaveableField(170)]
+            private Hero targetVillageHeadman;
         }
     }
 }

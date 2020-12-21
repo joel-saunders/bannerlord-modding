@@ -142,7 +142,7 @@ namespace LordBountyHunting
                     case LordBountyHuntingBehavior.TargetsCrime.Deserter:
                         this.CharObject = CharacterObject.All.Where((CharacterObject charO) =>
                                                             !charO.IsHero &&
-                                                            charO.IsBasicTroop).GetRandomElement<CharacterObject>();
+                                                            charO.IsBasicTroop).GetRandomElement<CharacterObject>();  
                         break;
                     case LordBountyHuntingBehavior.TargetsCrime.Murder: 
                     case LordBountyHuntingBehavior.TargetsCrime.Thief:
