@@ -100,7 +100,7 @@ namespace LordBountyHunting
 
         internal class LordBountyHuntingIssue : IssueBase //1-Update class name
         {
-            public LordBountyHuntingIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
+            public LordBountyHuntingIssue(Hero issueOwner) : base(issueOwner, CampaignTime.DaysFromNow(10f)) //1-Update class name
             {
                 this.questGoal = DecideTargetGoal();
                 this.questTargetCrime = DecideTargetsCrime();
@@ -308,6 +308,7 @@ namespace LordBountyHunting
                 TextObject log = new TextObject("Go look for the target at: {TARGET_SETTLEMENT.LINK}");
                 StringHelpers.SetSettlementProperties("TARGET_SETTLEMENT", this.TargetVillage.Settlement, log);
                 base.AddLog(log); //4- Done!
+                this._counterJournalLog = base.AddDiscreteLog(new TextObject("testtt"), new TextObject("Travellers met"), 0, this._suspectList.Count, new TextObject("Short Text"));
             }            
 
             // Required overrides (abstract)
@@ -336,9 +337,10 @@ namespace LordBountyHunting
                 this.DiscussDialogFlow = DialogFlow.CreateDialogFlow("quest_discuss", 100). //3-Update quest acceptance text
                     NpcLine("TEMPLATE: Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
+                this.prepDialogProperties();
                 this.CreateSuspectDialogs();
                 Campaign.Current.ConversationManager.AddDialogFlow(this.villageHeadmanDialog());
-                this.prepVillageHeadmanDialog();
+                
             }
             // </Required overrides
 
@@ -351,7 +353,8 @@ namespace LordBountyHunting
                         foreach (pbSuspect susp in this._suspectList)
                         {
                             idIncrease++;
-                            String dialogStateId = "pbquestBountyHunting_" + idIncrease.ToString();
+                            String dialogStateId = "pbquestBountyHunting_" + base.StringId +"_"+ idIncrease.ToString();
+                            susp.dialogId = dialogStateId;
                             Campaign.Current.ConversationManager.AddDialogFlow(TargetDeserterDialog(susp));
                         }
                         break;
@@ -359,7 +362,8 @@ namespace LordBountyHunting
                         foreach (pbSuspect susp in this._suspectList)
                         {
                             idIncrease++;
-                            String dialogStateId = "pbquestBountyHunting_" + idIncrease.ToString();
+                            String dialogStateId = "pbquestBountyHunting_" + base.StringId + "_" + idIncrease.ToString();
+                            susp.dialogId = dialogStateId;
                             Campaign.Current.ConversationManager.AddDialogFlow(TargetMurdererDialog(susp));
                         }
                         break;
@@ -367,11 +371,117 @@ namespace LordBountyHunting
                         foreach (pbSuspect susp in this._suspectList)
                         {
                             idIncrease++;
-                            String dialogStateId = "pbquestBountyHunting_" + idIncrease.ToString();
-                            Campaign.Current.ConversationManager.AddDialogFlow(TargetThiefDialog(susp, dialogStateId));
+                            String dialogStateId = "pbquestBountyHunting_" + base.StringId + "_" + idIncrease.ToString();
+                            susp.dialogId = dialogStateId;
+                            Campaign.Current.ConversationManager.AddDialogFlow(TargetThiefDialog(susp, dialogStateId));                            
                         }
                         break;
                 }
+            }
+            private void prepDialogProperties()
+            {
+                //List validated empty
+
+                //loop
+
+                //    headman : grab random
+                //        !knowntoheadman
+                //    otherT: out of headman AND 
+                //        get random where 
+
+                List<pbSuspect> validatedTravellers = new List<pbSuspect>();
+                ;
+                bool headmansTurn = true;
+
+                while(validatedTravellers.Count + 2 <= this._suspectList.Count)
+                {
+                    if(headmansTurn)
+                    {
+                        pbSuspect suspect = this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetChar && !sus.knownToHeadman && !sus.knownToTraveller).GetRandomElement();
+                        suspect.knownToHeadman = true;
+                        validatedTravellers.Add(suspect);
+                        
+                    }
+                    else
+                    {
+                        pbSuspect suspectTHATKnows = this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetChar && (sus.knownToHeadman || sus.knownToTraveller)).GetRandomElement();
+
+                        suspectTHATKnows.knowsThisTraveller = this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetChar && !sus.knownToHeadman && !sus.knownToTraveller && sus != suspectTHATKnows).GetRandomElement();
+
+                        suspectTHATKnows.knowsThisTraveller.knownToTraveller = true;
+                        validatedTravellers.Add(suspectTHATKnows.knowsThisTraveller);
+
+                    }
+                    headmansTurn = !headmansTurn;
+                }
+
+                //int travellersKnowntoHeadmanCount = (int)(this._suspectList.Count - 2) / 2;
+
+                //int travellersKnowntoOtherTravellersCount = this._suspectList.Count - 2 - travellersKnowntoHeadmanCount;
+
+                //List<pbSuspect> travellersKnowntoHeadman = new List<pbSuspect>();
+
+                //for (int i = 0; i < travellersKnowntoHeadmanCount; i++)
+                //{
+                //    //Set Headman's "friends"
+                //    pbSuspect suspect = this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetChar && !sus.knownToHeadman).GetRandomElement();
+                //    travellersKnowntoHeadman.Add(suspect);
+                //    suspect.knownToHeadman = true;
+                //}
+
+                //Collection of Travellers that other travellers know of
+                //List<pbSuspect> travellersKnowntoOtherTravellers = new List<pbSuspect>(this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetChar && !sus.knownToHeadman));
+
+                //Make it so there will be 2 travellers that can't be validated. These must be validated by their properties.
+                //if(travellersKnowntoOtherTravellers.Count > 1)
+                //{
+                //    travellersKnowntoOtherTravellers.Remove(travellersKnowntoOtherTravellers.GetRandomElement());
+                //}
+
+                //bool firstLoop = true;
+
+                //foreach (pbSuspect sus in travellersKnowntoOtherTravellers)
+                //{
+                //    pbSuspect speakingTraveller;
+                //    if (firstLoop)
+                //    {
+                //        this._suspectList.Where((pbSuspect sus2) => sus2.CharObject != this._targetChar && sus2.knownToHeadman && sus2 != sus && sus.knowsThisTraveller != sus2).GetRandomElement().knowsThisTraveller = sus;
+                //    }
+                //    else
+                //    {
+                //        this._suspectList.Where((pbSuspect sus2) => sus2.CharObject != this._targetChar && sus2.knowsThisTraveller == null && sus2 != sus && sus.knowsThisTraveller != sus2).GetRandomElement().knowsThisTraveller = sus;
+                //    }
+
+
+                //}
+
+                //for (int i = 0; i < travellersWhoKnowEachOther; i++)
+                //{
+                //    travellersKnowntoOtherTravellers.Add(this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetChar && !sus.knownToHeadman).GetRandomElement());
+
+                //    this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetChar && !sus.knownToHeadman).GetRandomElement().knowntoOtherTravellers = true;
+                //}
+
+                foreach (pbSuspect sus in this._suspectList)
+                {
+                    TextObject headmanResponse = new TextObject();
+                    if (sus.knownToHeadman) //TO-DO: Add property to pbSuspect to determine the headman's response.
+                    {
+                        headmanResponse = sus.dialogs.dialogHeadmanAffirmation;
+
+                    }
+                    else
+                    {
+                        headmanResponse = sus.dialogs.dialogHeadmanUnknown;
+                    }
+                    DialogFlow resultFlow = DialogFlow.CreateDialogFlow("pb_bounty_traveller_options", 1000).GoBackToDialogState("pb_bounty_traveller_options").
+                        PlayerLine("What about " + sus.Name).Condition(() => sus.introductionDone).NpcLine("What did they tell you?").
+                        PlayerLine(sus.dialogs.dialogPlayerDescription).
+                        NpcLine(headmanResponse).NpcLine("Anything else?").GotoDialogState("pb_bounty_traveller_options");
+                    Campaign.Current.ConversationManager.AddDialogFlow(resultFlow);
+                }
+                DialogFlow resultFlow2 = DialogFlow.CreateDialogFlow("pb_bounty_traveller_options", 1000).GoBackToDialogState("pb_bounty_traveller_options").PlayerLine("I think I'm good actually").NpcLine("Alright, well just let me know if I can help").CloseDialog();
+                Campaign.Current.ConversationManager.AddDialogFlow(resultFlow2);
             }
 
             private DialogFlow TargetDeserterDialog(pbSuspect susp)
@@ -392,24 +502,32 @@ namespace LordBountyHunting
             }
             private DialogFlow TargetThiefDialog(pbSuspect susp, String dialogId)
             {
+                TextObject theOtherTraveller = new TextObject("blank");
+                if(susp.knowsThisTraveller != null)
+                {
+                    theOtherTraveller = susp.knowsThisTraveller.Name;
+                }
+
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).BeginNpcOptions().
                     NpcOption("Hey there!", () => CharacterObject.OneToOneConversationCharacter == susp.CharObject && !susp.introductionDone && !base.IsFinalized).GotoDialogState(dialogId).
                     NpcOption("Hello again!", () => CharacterObject.OneToOneConversationCharacter == susp.CharObject && !base.IsFinalized).GotoDialogState(dialogId).GoBackToDialogState(dialogId).
                     BeginPlayerOptions().
-                        //Ask basic questions
+                    //Ask basic questions
                         PlayerOption("Hello stranger, what's your name?").Condition(() => !this.GetSuspect(CharacterObject.OneToOneConversationCharacter).introductionDone).Consequence(delegate
                         {
                             this.GetSuspect(CharacterObject.OneToOneConversationCharacter).CompleteIntroduction();
                         }).
                         NpcLine("Sure, my name is " + susp.Name).PlayerLine("And what brings you to this place?").
-                        NpcLine(susp.backgroundDialog).NpcLine("Is there anything else?").GotoDialogState(dialogId).
-                        PlayerOption("Hello again blank, what is it again that youre doing here?").Condition(() => this.GetSuspect(CharacterObject.OneToOneConversationCharacter).introductionDone).NpcLine(susp.backgroundDialog).
+                        NpcLine(susp.dialogs.dialogBackground).Consequence(delegate { 
+                            this._counterJournalLog.UpdateCurrentProgress(this._suspectList.Where((pbSuspect sus) => sus.introductionDone).Count()); }).
                         NpcLine("Is there anything else?").GotoDialogState(dialogId).
-                        //State what your here doing
-                        PlayerOption("I'm currently looking for someone named blank, have you heard of them?").
-                        //Acuse suspect of being the criminal
+                        PlayerOption("Hello again blank, what is it again that youre doing here?").Condition(() => this.GetSuspect(CharacterObject.OneToOneConversationCharacter).introductionDone).NpcLine(susp.dialogs.dialogBackground).
+                        NpcLine("Is there anything else?").GotoDialogState(dialogId).
+                    //State what your here doing
+                        PlayerOption("So you know someone here that can help me?").Condition(()=> susp.knowsThisTraveller != null).NpcLine("Yes, "+theOtherTraveller+" is someone you can trust.").
+                    //Acuse suspect of being the criminal
                         PlayerOption("You know why I'm here, blank. Don't make this difficult").BeginNpcOptions().
-                            NpcOption("Please don't hurt me, I'll come quietly", () => CharacterObject.OneToOneConversationCharacter == this._targetChar && this.GetSuspect(this._targetChar).personality == pbSuspect.PersonalityType.Scared).BeginPlayerOptions().
+                            NpcOption("Please don't hurt me, I'll come quietly", () => CharacterObject.OneToOneConversationCharacter == this._targetChar && this.GetSuspect(this._targetChar).Properties.personality == pbSuspect.PersonalityType.Scared).BeginPlayerOptions().
                                 PlayerOption("I need your head!").Consequence(delegate { this.fight_traveller_consequence(CharacterObject.OneToOneConversationCharacter); }).CloseDialog().
                                 PlayerOption("Sorry, I must have been mistaken.").NpcLine("Oh, uh.. ok. Is there anything else?").GotoDialogState(dialogId).EndPlayerOptions().
                             NpcOption("What are you talking about?", () => this._suspectList.Contains(GetSuspect(CharacterObject.OneToOneConversationCharacter))).BeginPlayerOptions().
@@ -480,7 +598,7 @@ namespace LordBountyHunting
                         NpcLine("Sure of course, I'd love to help.").
                         NpcLine("Do you have any suspects yet?").BeginPlayerOptions().
                         PlayerOption("No not yet. Any recomendations?").Condition(()=> !this._suspectList.Any((pbSuspect sus)=> sus.introductionDone)).NpcLine("Go talk to travellers").PlayerLine("ok will do!").CloseDialog().
-                        PlayerOption("Yes, could I see if you know them?").Condition(() => this._suspectList.Any((pbSuspect sus) => sus.introductionDone)).EndPlayerOptions().
+                        PlayerOption("Yes, could I see if you know them?").Condition(() => this._suspectList.Any((pbSuspect sus) => sus.introductionDone)).EndPlayerOptions().NpcLine("Of course, who do you want to know about?").
                         GotoDialogState("pb_bounty_traveller_options").
                     PlayerOption("And again... If I could bug you").
                         Condition(() => Hero.OneToOneConversationHero == this.targetVillageHeadman && this._villageHeadmanInitialConvComplete && !base.IsFinalized).
@@ -489,16 +607,7 @@ namespace LordBountyHunting
                 return resultFlow;
             }
 
-            private void prepVillageHeadmanDialog()
-            {
-                int dialogCounter = 1;
-                foreach( pbSuspect sus in this._suspectList)
-                {
-                    DialogFlow resultFlow = DialogFlow.CreateDialogFlow("pb_bounty_traveller_options", 1000).GoBackToDialogState("pb_bounty_traveller_options").PlayerLine("What about "+sus.Name).Condition(() => sus.introductionDone).CloseDialog();
-
-                    Campaign.Current.ConversationManager.AddDialogFlow(resultFlow);
-                }
-            }
+            
 
             // Optional Overrides (virtual)
             protected override void RegisterEvents()
@@ -618,30 +727,30 @@ namespace LordBountyHunting
                 //Pick random weapon type
                 ItemObject.ItemTypeEnum targetWeaponType = weaponTypes.GetRandomElement<ItemObject.ItemTypeEnum>();                
 
-                ItemObject targetWeapon = new ItemObject((from temp in ItemObject.All
-                                                          where
-                                                          temp.WeaponComponent != null &&
-                                                          temp.ItemType == targetWeaponType &&
-                                                          temp.Tier == (ItemObject.ItemTiers)weaponTier
-                                                          //temp.Culture == base.QuestGiver.Culture
-                                                          select temp).GetRandomElement<ItemObject>());
+                //ItemObject targetWeapon = new ItemObject((from temp in ItemObject.All
+                //                                          where
+                //                                          temp.WeaponComponent != null &&
+                //                                          temp.ItemType == targetWeaponType &&
+                //                                          temp.Tier == (ItemObject.ItemTiers)weaponTier
+                //                                          //temp.Culture == base.QuestGiver.Culture
+                //                                          select temp).GetRandomElement<ItemObject>());
 
                 pbSuspect suspect = new pbSuspect(this);
                 this._targetChar = suspect.CharObject;
 
-                this._targetChar.Name = new TextObject("XXXTraveller");
+                this._targetChar.Name = new TextObject("Traveller");
                     //NameGenerator.Current.GenerateHeroFirstName(this._targetChar, false);
                 //this._targetChar.AddEventForOccupiedHero(base.StringId);
 
                 this._suspectList.Add(suspect);
 
-                EquipmentElement targetWeaponEquipment = new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>(targetWeapon.StringId), null);
+                //EquipmentElement targetWeaponEquipment = new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>(targetWeapon.StringId), null);
 
                 //float weaponSkillToAdd = //targetWeapon.Item.RelevantSkill
-                this._targetChar.SetSkillValue(targetWeapon.RelevantSkill, 200); //this._questDifficulty);
+                //this._targetChar.SetSkillValue(targetWeapon.RelevantSkill, 200); //this._questDifficulty);
 
                 //give weapon to target
-                this._targetChar.Equipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
+                //this._targetChar.Equipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
                 //this._targetChar.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
 
                 InformationManager.DisplayMessage(new InformationMessage("item in 0 slot: "+this._targetChar.Equipment.GetEquipmentFromSlot((EquipmentIndex)0).ToString()));
@@ -663,11 +772,11 @@ namespace LordBountyHunting
             
             private void CreateTravellers()
             {
-                int travellerQuantity = 2;//MBRandom.Random.Next(1, 5);
+                int travellerQuantity = 4;//MBRandom.Random.Next(1, 5);
 
                 this.traverllerLocChars = new List<LocationCharacter>();                
 
-                for (int i = 0; travellerQuantity >= i; i++)
+                for (int i = 0; travellerQuantity > i; i++)
                 {
                     int targetAge = MBRandom.Random.Next(targetMinAge, targetMaxAge);
                     bool travellerFemale = MBRandom.Random.Next(0, 2) == 1;
@@ -864,6 +973,9 @@ namespace LordBountyHunting
 
             [SaveableField(170)]
             private Hero targetVillageHeadman;
+
+            [SaveableField(180)]
+            private JournalLog _counterJournalLog;
         }
     }
 }
