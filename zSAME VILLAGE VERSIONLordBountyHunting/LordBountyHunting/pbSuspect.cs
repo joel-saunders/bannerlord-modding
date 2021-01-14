@@ -28,7 +28,7 @@ using TaleWorlds.Library;
 
 namespace LordBountyHunting
 {
-    class pbTraveller
+    class pbSuspect
     {
         public enum PersonalityType
         {
@@ -91,7 +91,7 @@ namespace LordBountyHunting
         
         internal struct pbSuspectProperties
         {
-            public pbSuspectProperties(LordBountyHuntingBehavior.LordBountyHuntingQuest quest, pbTraveller targetSuspect = null)
+            public pbSuspectProperties(LordBountyHuntingBehavior.LordBountyHuntingQuest quest, pbSuspect targetSuspect = null)
             {
                 if (targetSuspect == null)
                 {
@@ -175,7 +175,7 @@ namespace LordBountyHunting
             "Hello again"
         };        
 
-        public pbSuspect(LordBountyHuntingBehavior.LordBountyHuntingQuest quest, pbTraveller targetSuspect = null)
+        public pbSuspect(LordBountyHuntingBehavior.LordBountyHuntingQuest quest, pbSuspect targetSuspect = null)
         {
             this.CurrentQuest = quest;
 
@@ -304,7 +304,7 @@ namespace LordBountyHunting
         public String dialogId;
 
         [SaveableField(150)]
-        public pbTraveller knowsThisTraveller;
+        public pbSuspect knowsThisTraveller;
 
         [SaveableField(160)]
         public bool knownToTraveller;

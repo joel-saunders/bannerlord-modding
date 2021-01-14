@@ -75,7 +75,7 @@ namespace radiantQuestTemplate
 
         internal class RQTIssue : IssueBase //1-Update class name
         {
-            public RQTIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
+            public RQTIssue(Hero issueOwner) : base(issueOwner, CampaignTime.DaysFromNow(10f)) //1-Update class name
             {
             }
 
@@ -152,14 +152,7 @@ namespace radiantQuestTemplate
             protected override void CompleteIssueWithTimedOutConsequences()
             {
             }
-
-            protected override int RewardGold()
-            {
-                get
-                {
-                    return (int)(1000 * base.issueDifficultyMultiplier);
-                }
-            }
+            
             //When the quest is generated and params are passed into the Quest instance.
             protected override QuestBase GenerateIssueQuest(string questId)
             {

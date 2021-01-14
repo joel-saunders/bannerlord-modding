@@ -95,7 +95,7 @@ namespace VillageBoyGoesBad
 
         internal class VBGBIssue : IssueBase
         {
-            public VBGBIssue(Hero issueOwner, Hero gangLeader) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f))
+            public VBGBIssue(Hero issueOwner, Hero gangLeader) : base(issueOwner, CampaignTime.DaysFromNow(10f))
             {
                 this._gangLeader = gangLeader;
                 this._targetTown = issueOwner.CurrentSettlement.Village.Bound.Town;
@@ -193,7 +193,7 @@ namespace VillageBoyGoesBad
             //When the quest is generated and params are passed into the Quest instance.
             protected override QuestBase GenerateIssueQuest(string questId)
             {
-                InformationManager.DisplayMessage(new InformationMessage("difficulty is: "+base.IssueDifficultyMultiplier));
+                //InformationManager.DisplayMessage(new InformationMessage("difficulty is: "+base.IssueDifficultyMultiplier));
 
                 return new VBGBCampaignBehavior.VBGBQuest(questId, base.IssueOwner, this._targetTown, this._gangLeader, this._isFriendsWithGang,
                     CampaignTime.DaysFromNow(10f), this.RewardGold);
@@ -230,7 +230,8 @@ namespace VillageBoyGoesBad
                 this._relationGainReward = 10;
                 this._gangRelationSufficient = friendsWithGang;
                 this._goldReward = rewardGold;
-                
+
+                InformationManager.DisplayMessage(new InformationMessage("This is a feed message (Display Message)."));
 
                 TextObject newLog = new TextObject("{QUESTGIVER.LINK}, a headman from {QUESTGIVERSETTLEMENT.LINK}, has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head.");
                 StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, this.QuestGiver.FirstName, newLog, false);
@@ -347,7 +348,7 @@ namespace VillageBoyGoesBad
             }
             private void EnterTargetSettlement(MobileParty party, Settlement settlement, Hero hero)
             {
-                if (party != null && party.IsMainParty && settlement != null && settlement.Town == _targetTown)
+                if (party != null && party.IsMainParty && settlement != null && settlement.Town == this._targetTown)
                 {
                     InformationManager.DisplayMessage(new InformationMessage("the headman's son must be here"));
                 }
@@ -460,17 +461,31 @@ namespace VillageBoyGoesBad
 
             private DialogFlow gangLeaderDiscussion()
             {
-                TextObject npcCostLine = new TextObject("Sure, but it'll cost ya. {GOLD_COST} {GOLD_ICON}");
+                //TextObject npcCostLine = new TextObject("Sure, but it'll cost ya. {GOLD_COST} {GOLD_ICON}");
+                //npcCostLine.SetTextVariable("GOLD_COST", this.gangLeaderPayoffNeeded.ToString());
+                //npcCostLine.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
+                //DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options", 6000).BeginPlayerOptions().
+                //    PlayerOption("hey hey, could I have your new guy?").
+                //        Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).
+                //        ClickableCondition(new ConversationSentence.OnClickableConditionDelegate(gang_leader_altern_path_clickable_delegate)).BeginNpcOptions().
+                //    NpcOption(npcCostLine, () => this.gangLeaderPayoffNeeded > 0).BeginPlayerOptions().
+                //        PlayerOption("Fine, take it.").Consequence(delegate { base.CompleteQuestWithSuccess(); }).NpcLine("it's a deal! Take the brat away").CloseDialog().
+                //        PlayerOption("on second thought, it's not worth it").NpcLine("Fine by me.").NpcLine("Anything else?").GotoDialogState("hero_main_options").
+                //    NpcOption("Naa, I don't like you", ()=> this.gangLeaderPayoffNeeded <= 0).PlayerLine("Absolutely! Thank you").Consequence(delegate { base.CompleteQuestWithSuccess(); });
+                //return resultFlow;
+
+
+                TextObject npcCostLine = new TextObject("If you can pay me. {GOLD_COST} {GOLD_ICON}. Unless you have a Companion that could help me out.");
                 npcCostLine.SetTextVariable("GOLD_COST", this.gangLeaderPayoffNeeded.ToString());
                 npcCostLine.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
-                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options", 6000).BeginPlayerOptions().
-                    PlayerOption("hey hey, can I click this?").
-                        Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).
-                        ClickableCondition(new ConversationSentence.OnClickableConditionDelegate(gang_leader_altern_path_clickable_delegate)).BeginNpcOptions().
-                    NpcOption(npcCostLine, () => this.gangLeaderPayoffNeeded > 0).BeginPlayerOptions().
-                        PlayerOption("Fine, take it.").Consequence(delegate { base.CompleteQuestWithSuccess(); }).NpcLine("it's a deal! Take the brat away").CloseDialog().
-                        PlayerOption("on second thought, it's not worth it").NpcLine("Fine by me.").NpcLine("Anything else?").GotoDialogState("hero_main_options").
-                    NpcOption("Tell ya what friend, you can just take him.", ()=> this.gangLeaderPayoffNeeded <= 0).PlayerLine("Absolutely! Thank you").Consequence(delegate { base.CompleteQuestWithSuccess(); });
+
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options").
+                    PlayerLine("Hey, can I take your new guy?").Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).BeginNpcOptions().
+                    NpcOption("Alright, let's talk", () => this._gangLeader.GetRelationWithPlayer() >= -10).
+                        NpcLine(npcCostLine).
+                    NpcOption("Naaaa, I don't like you", () => this._gangLeader.GetRelationWithPlayer() < -10).NpcLine("Anything else?").GotoDialogState("hero_main_options");
+
+
                 return resultFlow;
             }
 
@@ -902,7 +917,7 @@ namespace VillageBoyGoesBad
             }
             protected override void OnStartQuest()
             {
-                InformationManager.DisplayMessage(new InformationMessage("OnStartQuest has fired"));
+                //InformationManager.DisplayMessage(new InformationMessage("OnStartQuest has fired"));
                 base.OnStartQuest();
             }
             protected override void OnTimedOut()

@@ -98,12 +98,12 @@ namespace LordBountyHunting
             {
                 AddClassDefinition(typeof(LordBountyHuntingBehavior.LordBountyHuntingIssue), 1); //1-Update class name
                 AddClassDefinition(typeof(LordBountyHuntingBehavior.LordBountyHuntingQuest), 2); //1-Update class name
-                AddClassDefinition(typeof(pbTraveller), 3); //1-Update class name
+                AddClassDefinition(typeof(pbSuspect), 3); //1-Update class name
             }
 
             protected override void DefineStructTypes()
             {
-                base.AddStructDefinition(typeof(pbTraveller.pbSuspectProperties), 4);
+                base.AddStructDefinition(typeof(pbSuspect.pbSuspectProperties), 4);
             }
         }
 
@@ -308,8 +308,7 @@ namespace LordBountyHunting
                 this._questTargetCrime = questTargetCrime;
                 this._targetIsFemale = targetisFemale;
                 this._questDifficulty = questDifficulty;
-                this.PrepQuestVariation();
-                this.ChooseInterogationVillage();                
+                this.PrepTargetVillage();                
                 this.CreateTargetCharacter();
                 this.CreateTravellers();
                 //this.PrepTargetDialog();
@@ -321,19 +320,6 @@ namespace LordBountyHunting
                 this._counterJournalLog = base.AddDiscreteLog(new TextObject("testtt"), new TextObject("Travellers met"), 0, this._suspectList.Count, new TextObject("Short Text"));
             }            
 
-            enum TargetTimeofDay
-            {
-                Anytime = 0,
-                Daytime = 1,
-                Nighttime = 2
-            }
-
-            enum TargetLocationType
-            {
-                DifferentVillage = 0,
-                SameVillage = 1,
-                QuestVillage = 2,
-            }
             // Required overrides (abstract)
             public override TextObject Title => new TextObject("A Lord's Bounty"); //4- Done!
 
@@ -344,25 +330,6 @@ namespace LordBountyHunting
                 this.SetDialogs();
 
             }
-
-            private void PrepQuestVariation()
-            {
-                this._targetLocationType = TargetLocationType.DifferentVillage;
-                this._targetTimeOfDay = TargetTimeofDay.Anytime;
-            }
-
-            private void CreateTargetCharacter()
-            {
-                //will need to change this to a Basic Character
-                this._targetHero = HeroCreator.CreateSpecialHero(CharacterObject.All.Where((CharacterObject charO) =>
-                                                            !charO.IsHero &&
-                                                            charO.Culture == base.QuestGiver.Culture &&
-                                                            (charO.Occupation == Occupation.Merchant || charO.Occupation == Occupation.ShopKeeper)
-                                                            ).GetRandomElement<CharacterObject>());
-                this._targetHero.Name = new TextObject("TARGET");
-            }
-
-
             //there are a couple DialogFlows QuestBase has that you'll want to set here. In addition, whatever other dialog flows you have should also
             //be called here. Have them in separate methods for simplicity.
             protected override void SetDialogs()
@@ -392,7 +359,7 @@ namespace LordBountyHunting
                 switch (this._questTargetCrime)
                 {
                     case TargetsCrime.Deserter:                        
-                        foreach (pbTraveller susp in this._suspectList)
+                        foreach (pbSuspect susp in this._suspectList)
                         {
                             idIncrease++;
                             String dialogStateId = "pbquestBountyHunting_" + base.StringId +"_"+ idIncrease.ToString();
@@ -401,7 +368,7 @@ namespace LordBountyHunting
                         }
                         break;
                     case TargetsCrime.Murder:                        
-                        foreach (pbTraveller susp in this._suspectList)
+                        foreach (pbSuspect susp in this._suspectList)
                         {
                             idIncrease++;
                             String dialogStateId = "pbquestBountyHunting_" + base.StringId + "_" + idIncrease.ToString();
@@ -410,7 +377,7 @@ namespace LordBountyHunting
                         }
                         break;
                     case TargetsCrime.Thief:
-                        foreach (pbTraveller susp in this._suspectList)
+                        foreach (pbSuspect susp in this._suspectList)
                         {
                             idIncrease++;
                             String dialogStateId = "pbquestBountyHunting_" + base.StringId + "_" + idIncrease.ToString();
@@ -754,7 +721,98 @@ namespace LordBountyHunting
                 //foreach (TrackedObject in Mission.Current.GetMissionBehaviour<VisualTrackerMissionBehavior>()._currentTrackedObjects);
             }
 
-            
+            private void CreateTargetCharacter()
+            {                
+                Random rand = new Random();
+                //bool targetIsSoldier = this._questTargetCrime == TargetsCrime.Deserter;
+                bool targetIsRanged = false; //need to determine any way/reason to implement this.
+                int targetAge = rand.Next(targetMinAge, targetMaxAge);
+                int weaponTier;
+                this._suspectList = new List<pbSuspect>();
+                //Hero testhero = new Hero();
+                
+                //HeroCreator.CreateBasicHero(charOb, testhero);
+
+
+                if (this._questDifficulty < .2f)
+                {
+                    weaponTier = 0; //tier 1
+                } else if (this._questDifficulty < .4f)
+                {
+                    weaponTier = 2;
+                }
+                else
+                {
+                    weaponTier = 3;
+                }
+
+                //Dictionary <ItemObject.ItemTypeEnum, float> availableWeaponTypes = new Dictionary<ItemObject.ItemTypeEnum, float>()
+                //    {
+                //        { ItemObject.ItemTypeEnum.OneHandedWeapon, 1.0f},
+                //        { ItemObject.ItemTypeEnum.TwoHandedWeapon, 1.0f},
+                //        { ItemObject.ItemTypeEnum.Polearm, 1.0f},
+                //        { ItemObject.ItemTypeEnum.Thrown, 1.0f}
+                //    };
+
+                //rand.Next(0, (int)availableWeaponTypes.Values.Sum());
+
+                //foreach(CharacterObject charTemp in CharacterObject.Templates)
+                //{
+                //    InformationManager.DisplayMessage(new InformationMessage(charTemp.StringId));
+                //}                
+
+                List<ItemObject.ItemTypeEnum> weaponTypes = new List<ItemObject.ItemTypeEnum>()
+                    {
+                        ItemObject.ItemTypeEnum.OneHandedWeapon,
+                        ItemObject.ItemTypeEnum.TwoHandedWeapon,
+                        ItemObject.ItemTypeEnum.Polearm
+                    };
+
+                //Pick random weapon type
+                ItemObject.ItemTypeEnum targetWeaponType = weaponTypes.GetRandomElement<ItemObject.ItemTypeEnum>();                
+
+                //ItemObject targetWeapon = new ItemObject((from temp in ItemObject.All
+                //                                          where
+                //                                          temp.WeaponComponent != null &&
+                //                                          temp.ItemType == targetWeaponType &&
+                //                                          temp.Tier == (ItemObject.ItemTiers)weaponTier
+                //                                          //temp.Culture == base.QuestGiver.Culture
+                //                                          select temp).GetRandomElement<ItemObject>());
+
+                pbSuspect suspect = new pbSuspect(this);
+                this._targetHero = suspect.CharObject;
+
+                this._targetHero.Name = new TextObject("Traveller");
+                    //NameGenerator.Current.GenerateHeroFirstName(this._targetHero, false);
+                //this._targetHero.AddEventForOccupiedHero(base.StringId);
+
+                this._suspectList.Add(suspect);
+
+                //EquipmentElement targetWeaponEquipment = new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>(targetWeapon.StringId), null);
+
+                //float weaponSkillToAdd = //targetWeapon.Item.RelevantSkill
+                //this._targetHero.SetSkillValue(targetWeapon.RelevantSkill, 200); //this._questDifficulty);
+
+                //give weapon to target
+                //this._targetHero.Equipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
+                //this._targetHero.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, targetWeaponEquipment);
+
+                InformationManager.DisplayMessage(new InformationMessage("item in 0 slot: "+this._targetHero.CharacterObject.Equipment.GetEquipmentFromSlot((EquipmentIndex)0).ToString()));
+
+                InformationManager.DisplayMessage(new InformationMessage("Target Background: "+suspect.Properties.background.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage("Target is a woman: "+suspect.Properties.isFemale.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage("Target Personality: "+suspect.Properties.personality.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage("Target's Weapon: "+targetWeaponType.ToString()));
+                InformationManager.DisplayMessage(new InformationMessage("Hair: " + suspect.CharObject.HairTags));
+
+                AgentData agentData = new AgentData(new SimpleAgentOrigin(this._targetHero.CharacterObject));
+                
+                this._targetLocChar = new LocationCharacter(agentData, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
+                "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", true, false, null, false, false, true);
+
+                this._targetLocationId = this.TargetVillage.Settlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();                
+                
+            }
             
             private void CreateTravellers()
             {
@@ -766,7 +824,25 @@ namespace LordBountyHunting
                 {
                     int targetAge = MBRandom.Random.Next(targetMinAge, targetMaxAge);
                     bool travellerFemale = MBRandom.Random.Next(0, 2) == 1;
-                    
+                    int weaponTier;
+
+                    //Hero testhero = new Hero();
+
+                    //HeroCreator.CreateBasicHero(charOb, testhero);
+
+
+                    if (this._questDifficulty < .2f)
+                    {
+                        weaponTier = 0; //tier 1
+                    }
+                    else if (this._questDifficulty < .4f)
+                    {
+                        weaponTier = 2;
+                    }
+                    else
+                    {
+                        weaponTier = 3;
+                    }
 
                     //Hero travellerHero = HeroCreator.CreateSpecialHero((from charTemp in CharacterObject.All
                     //                                                  where
@@ -795,7 +871,7 @@ namespace LordBountyHunting
                 }
             }
 
-            private void ChooseInterogationVillage()
+            private void PrepTargetVillage()
             {                
                 this.TargetVillage = this.QuestGiver.CurrentSettlement.Village.TradeBound.BoundVillages.Where((Village settl) => settl.VillageState != Village.VillageStates.BeingRaided && settl.VillageState != Village.VillageStates.Looted && settl != base.QuestGiver.CurrentSettlement.Village).GetRandomElement<Village>();
 
@@ -944,12 +1020,6 @@ namespace LordBountyHunting
 
             [SaveableField(180)]
             private JournalLog _counterJournalLog;
-
-            [SaveableField(190)]
-            private TargetTimeofDay _targetTimeOfDay;
-
-            [SaveableField(200)]
-            private TargetLocationType _targetLocationType;
         }
     }
 }
