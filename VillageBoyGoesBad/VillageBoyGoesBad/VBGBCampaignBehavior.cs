@@ -56,7 +56,9 @@ namespace VillageBoyGoesBad
         //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver)
         {
+            
             return issueGiver != null &&
+
                     issueGiver.IsHeadman && 
                     issueGiver.CurrentSettlement != null &&
                     issueGiver.CurrentSettlement.Village.Bound.Notables.Any((Hero gl) => gl.IsGangLeader && !gl.IsOccupiedByAnEvent());
@@ -230,6 +232,8 @@ namespace VillageBoyGoesBad
                 this._relationGainReward = 10;
                 this._gangRelationSufficient = friendsWithGang;
                 this._goldReward = rewardGold;
+
+                
 
                 InformationManager.DisplayMessage(new InformationMessage("This is a feed message (Display Message)."));
 

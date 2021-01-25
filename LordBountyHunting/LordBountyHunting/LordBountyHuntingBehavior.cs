@@ -109,7 +109,7 @@ namespace LordBountyHunting
 
         internal class LordBountyHuntingIssue : IssueBase //1-Update class name
         {
-            public LordBountyHuntingIssue(Hero issueOwner) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(10f)) //1-Update class name
+            public LordBountyHuntingIssue(Hero issueOwner) : base(issueOwner, CampaignTime.DaysFromNow(10f)) //1-Update class name
             {
                 this.questGoal = DecideTargetGoal();
                 this.questTargetCrime = DecideTargetsCrime();
@@ -431,7 +431,7 @@ namespace LordBountyHunting
                 //    otherT: out of headman AND 
                 //        get random where 
 
-                List<pbSuspect> validatedTravellers = new List<pbSuspect>();
+                List<pbTraveller> validatedTravellers = new List<pbTraveller>();
                 ;
                 bool headmansTurn = true;
 
@@ -439,16 +439,16 @@ namespace LordBountyHunting
                 {
                     if(headmansTurn)
                     {
-                        pbSuspect suspect = this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetHero && !sus.knownToHeadman && !sus.knownToTraveller).GetRandomElement();
+                        pbTraveller suspect = this._suspectList.Where((pbTraveller sus) => sus.CharObject != this._targetHero && !sus.knownToHeadman && !sus.knownToTraveller).GetRandomElement();
                         suspect.knownToHeadman = true;
                         validatedTravellers.Add(suspect);
                         
                     }
                     else
                     {
-                        pbSuspect suspectTHATKnows = this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetHero && (sus.knownToHeadman || sus.knownToTraveller)).GetRandomElement();
+                        pbTraveller suspectTHATKnows = this._suspectList.Where((pbTraveller sus) => sus.CharObject != this._targetHero && (sus.knownToHeadman || sus.knownToTraveller)).GetRandomElement();
 
-                        suspectTHATKnows.knowsThisTraveller = this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetHero && !sus.knownToHeadman && !sus.knownToTraveller && sus != suspectTHATKnows).GetRandomElement();
+                        suspectTHATKnows.knowsThisTraveller = this._suspectList.Where((pbTraveller sus) => sus.CharObject != this._targetHero && !sus.knownToHeadman && !sus.knownToTraveller && sus != suspectTHATKnows).GetRandomElement();
 
                         suspectTHATKnows.knowsThisTraveller.knownToTraveller = true;
                         validatedTravellers.Add(suspectTHATKnows.knowsThisTraveller);
@@ -504,7 +504,7 @@ namespace LordBountyHunting
                 //    this._suspectList.Where((pbSuspect sus) => sus.CharObject != this._targetHero && !sus.knownToHeadman).GetRandomElement().knowntoOtherTravellers = true;
                 //}
 
-                foreach (pbSuspect sus in this._suspectList)
+                foreach (pbTraveller sus in this._suspectList)
                 {
                     TextObject headmanResponse = new TextObject();
                     if (sus.knownToHeadman) //TO-DO: Add property to pbSuspect to determine the headman's response.
@@ -526,7 +526,7 @@ namespace LordBountyHunting
                 Campaign.Current.ConversationManager.AddDialogFlow(resultFlow2);
             }
 
-            private DialogFlow TargetDeserterDialog(pbSuspect susp)
+            private DialogFlow TargetDeserterDialog(pbTraveller susp)
             {
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && (Hero.OneToOneConversationHero == this._targetHero || this.travellerHeros.Contains(Hero.OneToOneConversationHero)) && !base.IsFinalized).BeginPlayerOptions().
                     PlayerOption("why did you DESERT.").CloseDialog().
@@ -534,7 +534,7 @@ namespace LordBountyHunting
 
                 return resultFlow;
             }
-            private DialogFlow TargetMurdererDialog(pbSuspect susp)
+            private DialogFlow TargetMurdererDialog(pbTraveller susp)
             {
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).NpcLine("Hey there!").Condition(() => this._targetHero != null && (Hero.OneToOneConversationHero == this._targetHero || this.travellerHeros.Contains(Hero.OneToOneConversationHero)) && !base.IsFinalized).BeginPlayerOptions().
                     PlayerOption("why did you Murder.").CloseDialog().
@@ -542,7 +542,7 @@ namespace LordBountyHunting
 
                 return resultFlow;
             }
-            private DialogFlow TargetThiefDialog(pbSuspect susp, String dialogId)
+            private DialogFlow TargetThiefDialog(pbTraveller susp, String dialogId)
             {
                 TextObject theOtherTraveller = new TextObject("blank");
                 if(susp.knowsThisTraveller != null)
@@ -596,7 +596,7 @@ namespace LordBountyHunting
                         }).
                         NpcLine("Sure, my name is " + susp.Name).PlayerLine("And what brings you to this place?").
                         NpcLine(susp.dialogs.dialogBackground).Consequence(delegate { 
-                            this._counterJournalLog.UpdateCurrentProgress(this._suspectList.Where((pbSuspect sus) => sus.introductionDone).Count()); }).
+                            this._counterJournalLog.UpdateCurrentProgress(this._suspectList.Where((pbTraveller sus) => sus.introductionDone).Count()); }).
                         NpcLine("Is there anything else?").GotoDialogState(dialogId).
                         PlayerOption("Hello again blank, what is it again that youre doing here?").Condition(() => this.GetSuspect(Hero.OneToOneConversationHero).introductionDone).NpcLine(susp.dialogs.dialogBackground).
                         NpcLine("Is there anything else?").GotoDialogState(dialogId).
@@ -604,7 +604,7 @@ namespace LordBountyHunting
                         PlayerOption("So you know someone here that can help me?").Condition(()=> susp.knowsThisTraveller != null).NpcLine("Yes, "+theOtherTraveller+" is someone you can trust.").
                     //Acuse suspect of being the criminal
                         PlayerOption("You know why I'm here, blank. Don't make this difficult").BeginNpcOptions().
-                            NpcOption("Please don't hurt me, I'll come quietly", () => Hero.OneToOneConversationHero == this._targetHero && this.GetSuspect(this._targetHero).Properties.personality == pbSuspect.PersonalityType.Scared).BeginPlayerOptions().
+                            NpcOption("Please don't hurt me, I'll come quietly", () => Hero.OneToOneConversationHero == this._targetHero && this.GetSuspect(this._targetHero).Properties.personality == pbTraveller.PersonalityType.Scared).BeginPlayerOptions().
                                 PlayerOption("I need your head!").Consequence(delegate { this.fight_traveller_consequence(Hero.OneToOneConversationHero); }).CloseDialog().
                                 PlayerOption("Sorry, I must have been mistaken.").NpcLine("Oh, uh.. ok. Is there anything else?").GotoDialogState(dialogId).EndPlayerOptions().
                             NpcOption("What are you talking about?", () => this._suspectList.Contains(GetSuspect(Hero.OneToOneConversationHero))).BeginPlayerOptions().
@@ -674,8 +674,8 @@ namespace LordBountyHunting
                         Condition(() => Hero.OneToOneConversationHero == this.targetVillageHeadman && !this._villageHeadmanInitialConvComplete && !base.IsFinalized).Consequence( delegate { this._villageHeadmanInitialConvComplete = true; }).
                         NpcLine("Sure of course, I'd love to help.").
                         NpcLine("Do you have any suspects yet?").BeginPlayerOptions().
-                        PlayerOption("No not yet. Any recomendations?").Condition(()=> !this._suspectList.Any((pbSuspect sus)=> sus.introductionDone)).NpcLine("Go talk to travellers").PlayerLine("ok will do!").CloseDialog().
-                        PlayerOption("Yes, could I see if you know them?").Condition(() => this._suspectList.Any((pbSuspect sus) => sus.introductionDone)).EndPlayerOptions().NpcLine("Of course, who do you want to know about?").
+                        PlayerOption("No not yet. Any recomendations?").Condition(()=> !this._suspectList.Any((pbTraveller sus)=> sus.introductionDone)).NpcLine("Go talk to travellers").PlayerLine("ok will do!").CloseDialog().
+                        PlayerOption("Yes, could I see if you know them?").Condition(() => this._suspectList.Any((pbTraveller sus) => sus.introductionDone)).EndPlayerOptions().NpcLine("Of course, who do you want to know about?").
                         GotoDialogState("pb_bounty_traveller_options").
                     PlayerOption("And again... If I could bug you").
                         Condition(() => Hero.OneToOneConversationHero == this.targetVillageHeadman && this._villageHeadmanInitialConvComplete && !base.IsFinalized).
@@ -766,7 +766,7 @@ namespace LordBountyHunting
                 {
                     int targetAge = MBRandom.Random.Next(targetMinAge, targetMaxAge);
                     bool travellerFemale = MBRandom.Random.Next(0, 2) == 1;
-                    
+
 
                     //Hero travellerHero = HeroCreator.CreateSpecialHero((from charTemp in CharacterObject.All
                     //                                                  where
@@ -775,7 +775,7 @@ namespace LordBountyHunting
                     //                           charTemp.IsFemale == travellerFemale
                     //                                                  select charTemp).GetRandomElement<CharacterObject>());
 
-                    pbSuspect suspect = new pbSuspect(this, GetSuspect(this._targetHero));
+                    pbTraveller suspect = new pbTraveller(this, GetSuspect(this._targetHero));
                     this._suspectList.Add(suspect);
 
                     InformationManager.DisplayMessage(new InformationMessage("Hair: " + suspect.CharObject.HairTags));
@@ -803,9 +803,9 @@ namespace LordBountyHunting
                 InformationManager.DisplayMessage(new InformationMessage("Go to: "+this.TargetVillage.Name.ToString()));
             }
 
-            private pbSuspect GetSuspect(Hero hero)
+            private pbTraveller GetSuspect(Hero hero)
             {
-                return this._suspectList.Find((pbSuspect sus) => sus.CharObject == hero);
+                return this._suspectList.Find((pbTraveller sus) => sus.CharObject == hero);
             }
 
             public override bool IsQuestGiverHidden => false;
@@ -928,7 +928,7 @@ namespace LordBountyHunting
             public List<Hero> travellerHeros;
 
             [SaveableField(130)]
-            public List<pbSuspect> _suspectList;
+            public List<pbTraveller> _suspectList;
 
             [SaveableField(140)]
             public TextObject _targetName;

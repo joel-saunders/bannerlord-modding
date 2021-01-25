@@ -175,7 +175,7 @@ namespace LordBountyHunting
             "Hello again"
         };        
 
-        public pbSuspect(LordBountyHuntingBehavior.LordBountyHuntingQuest quest, pbTraveller targetSuspect = null)
+        public pbTraveller(LordBountyHuntingBehavior.LordBountyHuntingQuest quest, pbTraveller targetSuspect = null)
         {
             this.CurrentQuest = quest;
 
