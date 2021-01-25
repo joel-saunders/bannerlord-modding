@@ -181,14 +181,14 @@ namespace GatherInformation
         }
         internal class GatherInformationIssue : IssueBase
         {
-            public GatherInformationIssue(Hero issueOwner, Hero issueTarget) : base(issueOwner, new Dictionary<IssueEffect, float>(), CampaignTime.DaysFromNow(17f))
+            public GatherInformationIssue(Hero issueOwner, Hero issueTarget) : base(issueOwner, CampaignTime.DaysFromNow(17f))
             {
                 this._targetHero = issueTarget;
             }
             protected override bool IsThereAlternativeSolution
             {
                 get
-                {
+                {                    
                     return false;
                 }
             }
