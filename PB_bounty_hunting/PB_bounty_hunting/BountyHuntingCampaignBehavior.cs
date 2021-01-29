@@ -259,6 +259,11 @@ namespace PB_bounty_hunting
 
                 int travellerCount = 4;
 
+                for(int i = 0; i < travellerCount; i++ )
+                {
+                    result.Add(new pbTraveller());
+                }
+
                 return result;
             }
             // Required overrides (abstract)

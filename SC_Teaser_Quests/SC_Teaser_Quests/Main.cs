@@ -8,11 +8,22 @@ using TaleWorlds.Core;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.CampaignSystem;
+using HarmonyLib;
 
 namespace SC_Teaser_Quests
 {
     public class Main : MBSubModuleBase
     {
+
+        protected override void OnSubModuleLoad()
+        {
+            try
+            {
+                new Harmony("sc_teaser_harmony_instance").PatchAll();
+            }
+            catch (Exception)
+            { }
+        }
 
         protected override void OnGameStart(Game game, IGameStarter gameStarterObject)
         {
@@ -21,7 +32,9 @@ namespace SC_Teaser_Quests
                 try
                 {
                     CampaignGameStarter gameStarter = (CampaignGameStarter)gameStarterObject;
-                    gameStarter.AddBehavior(new SC_HeadmanNeedsGrainIssueBehavior()); 
+                    gameStarter.AddBehavior(new SC_HeadmanNeedsGrainIssueBehavior());
+                    gameStarter.AddBehavior(new SC_NotableWantsDaughterFoundIssueBehavior());
+                    gameStarter.AddBehavior(new SC_NearbyBanditBaseIssueBehavior());
                 }
                 catch (Exception e)
                 {

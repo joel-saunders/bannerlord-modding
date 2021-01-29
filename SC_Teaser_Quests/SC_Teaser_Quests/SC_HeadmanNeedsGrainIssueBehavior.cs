@@ -40,7 +40,7 @@ namespace SC_Teaser_Quests
         public override void RegisterEvents()
         {
             CampaignEvents.OnCheckForIssueEvent.AddNonSerializedListener(this, new Action<IssueArgs>(this.OnCheckForIssue));
-            CampaignEvents.RemoveListeners(Campaign.Current.GetCampaignBehavior<HeadmanNeedsGrainIssueBehavior>());
+            //CampaignEvents.RemoveListeners(Campaign.Current.GetCampaignBehavior<HeadmanNeedsGrainIssueBehavior>());
             CampaignEvents.WeeklyTickEvent.AddNonSerializedListener(this, new Action(this.WeeklyTick));
             CampaignEvents.OnSessionLaunchedEvent.AddNonSerializedListener(this, new Action<CampaignGameStarter>(this.OnSessionLaunched));
         }
@@ -64,7 +64,7 @@ namespace SC_Teaser_Quests
         //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver)
         {
-            if (issueGiver.CurrentSettlement == null || !issueGiver.IsNotable || !issueGiver.CurrentSettlement.IsVillage || !issueGiver.CurrentSettlement.Village.Bound.IsTown)
+            if (issueGiver.CurrentSettlement == null || issueGiver.CurrentSettlement.OwnerClan.Kingdom.Name != new TextObject("Manalore") || !issueGiver.IsNotable || !issueGiver.CurrentSettlement.IsVillage || !issueGiver.CurrentSettlement.Village.Bound.IsTown)
             {
                 return false;
             }
@@ -82,7 +82,8 @@ namespace SC_Teaser_Quests
 
         private IssueBase OnSelected(PotentialIssueData pid, Hero issueOwner)
         {
-            return new SC_HeadmanNeedsGrainIssueBehavior.SC_HeadmanNeedsGrainIssue(issueOwner);
+            InformationManager.DisplayMessage(new InformationMessage("Mando quest generated."));
+            return new SC_HeadmanNeedsGrainIssueBehavior.SC_HeadmanNeedsGrainIssue(issueOwner);        
         }
 
         public class RQTCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner //1-Update class name

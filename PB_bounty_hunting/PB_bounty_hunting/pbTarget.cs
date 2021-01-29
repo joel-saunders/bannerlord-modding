@@ -34,6 +34,7 @@ namespace PB_bounty_hunting
         {
             this.location = quest._travellerVillage.Settlement;
             this.timeOfDayAvailable = new List<BountyHuntingCampaignBehavior.BountyHuntingQuest.TimeOfDay>(){ BountyHuntingCampaignBehavior.BountyHuntingQuest.TimeOfDay.Anytime, BountyHuntingCampaignBehavior.BountyHuntingQuest.TimeOfDay.DayOnly, BountyHuntingCampaignBehavior.BountyHuntingQuest.TimeOfDay.NightOnly}.GetRandomElement<BountyHuntingCampaignBehavior.BountyHuntingQuest.TimeOfDay>();
+            this.culture = quest.QuestGiver.Culture;
             this.characterObject = (CharacterObject.Templates.GetRandomElement<CharacterObject>());
             
         }
