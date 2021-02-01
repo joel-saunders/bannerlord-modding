@@ -54,6 +54,7 @@ namespace SC_Teaser_Quests
 
 		private IssueBase OnIssueSelected(PotentialIssueData pid, Hero issueOwner)
 		{
+			InformationManager.DisplayMessage(new InformationMessage(GameTexts.FindText("sc_quest_dialog_test").ToString()));
 			return new SC_NearbyBanditBaseIssueBehavior.SC_NearbyBanditBaseIssue(issueOwner, pid.RelatedObject as Settlement);
 		}
 
@@ -89,7 +90,7 @@ namespace SC_Teaser_Quests
 
 		public class SC_NearbyBanditBaseIssueTypeDefiner : SaveableTypeDefiner
 		{
-			public SC_NearbyBanditBaseIssueTypeDefiner() : base(400000)
+			public SC_NearbyBanditBaseIssueTypeDefiner() : base(0983216728)
 			{
 			}
 

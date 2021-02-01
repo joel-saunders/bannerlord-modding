@@ -59,7 +59,7 @@ namespace SC_Teaser_Quests
 
 			public class SC_NotableWantsDaughterFoundIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner
 			{
-				public SC_NotableWantsDaughterFoundIssueTypeDefiner() : base(1088000)
+				public SC_NotableWantsDaughterFoundIssueTypeDefiner() : base(0983219288)
 				{
 				}
 

@@ -229,16 +229,56 @@ namespace PB_bounty_hunting
                 this._targetWanted = targetwanted;
                 this._travellerVillage = SetTravellerVillage();
                 this._target = GenerateTarget(this);
+                this.GenerateCluesAndIntel();
                 this._travellers = GenerateTravellers();
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
+                InformationManager.DisplayMessage(new InformationMessage(this._travellerVillage.ToString()));
                 base.AddLog(new TextObject("The quest has begun!!! woooo!")); //4-Update Quest naming
-            }
+            }            
             public enum TimeOfDay
             {
                 DayOnly = 0,
                 NightOnly = 1,
                 Anytime = 2
+            }
+            public enum Clue
+            {
+                Location = 0,
+                TimeofDay = 1,
+                Culture = 2
+            }
+
+            public enum Intel
+            {
+                Alibi = 0,
+                Destination = 1,
+                Background = 2
+            }
+
+            private  void OnBeforeMissionOpen()
+            {
+                if (Settlement.CurrentSettlement == this._travellerVillage.Settlement)
+                {
+                    if (this._travellerLocationCharacters == null)
+                    {
+                        //init locChars
+                        this._travellerLocationCharacters = new List<LocationCharacter>();
+                        foreach (pbTraveller traveller in this._travellers)
+                        {
+                            AgentData travellerAgent = new AgentData(new SimpleAgentOrigin(traveller.travellerHero.CharacterObject));
+                            LocationCharacter travellerLocChar = new LocationCharacter(travellerAgent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors), "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", true, false, null, false, false, true);
+                            this._travellerLocationCharacters.Add(travellerLocChar);
+                        }
+                    }
+
+                    //just add locChars
+                    foreach (LocationCharacter locChar in this._travellerLocationCharacters)
+                    {
+                        Location locationWithId = Settlement.CurrentSettlement.LocationComplex.GetListOfLocations().GetRandomElement<Location>();
+                        locationWithId.AddCharacter(locChar);
+                    }
+                }
             }
 
             private Village SetTravellerVillage()
@@ -253,6 +293,18 @@ namespace PB_bounty_hunting
                 return result;
             }
 
+            private void GenerateCluesAndIntel()
+            {
+                this._availableClues = new List<Clue> { Clue.Culture, Clue.Location, Clue.TimeofDay };
+
+                //this.cluesKnown = new Dictionary<Clue, bool>();
+                //this.cluesKnown.Add(Clue.Culture, true);
+                //this.cluesKnown.Add(Clue.Location, true);
+                //this.cluesKnown.Add(Clue.TimeofDay, true);
+
+                this._intelOnTarget = new List<Intel> { Intel.Alibi, Intel.Background, Intel.Destination };
+            }
+
             private List<pbTraveller> GenerateTravellers()
             {
                 List<pbTraveller> result = new List<pbTraveller>();
@@ -261,7 +313,16 @@ namespace PB_bounty_hunting
 
                 for(int i = 0; i < travellerCount; i++ )
                 {
-                    result.Add(new pbTraveller());
+                    if (this._availableClues.Count > 0)
+                    {
+                        Clue travellerClue = this._availableClues.GetRandomElement<Clue>();
+                        result.Add(new pbTraveller(this, travellerClue));
+                        this._availableClues.Remove(travellerClue);
+                    }
+                    else
+                    {
+                        result.Add(new pbTraveller(this));
+                    }
                 }
 
                 return result;
@@ -288,8 +349,54 @@ namespace PB_bounty_hunting
                     NpcLine("TEMPLATE: Why are you here? Shouldn't you be questing?").
                         Condition(() => Hero.OneToOneConversationHero == this.QuestGiver);
                 //Campaign.Current.ConversationManager.AddDialogFlow(dialogflowmethod);
+                this.GenerateTravellerDialogs();
             }
             // </Required overrides
+
+            private void GenerateTravellerDialogs()
+            {
+                int idIncrease = 0;
+                switch(this._targetCrime)
+                {
+                    case TargetCrime.Deserter:
+                    case TargetCrime.Murder:
+                    case TargetCrime.Thief:
+                        foreach (pbTraveller traveller in this._travellers)
+                        {
+                            idIncrease++;
+                            String dialogStateId = "pbquestBountyHunting_" + base.StringId + "_" + idIncrease.ToString();
+                            Campaign.Current.ConversationManager.AddDialogFlow(TravellerDialog(traveller, dialogStateId));
+                        }
+                        break;
+                }
+                    
+            }
+
+            private DialogFlow TravellerDialog(pbTraveller traveller, string uniqueDialogId)
+            {
+
+
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).
+                    BeginNpcOptions().
+                        NpcOption("Hello there, how can I help you?", () => Hero.OneToOneConversationHero == traveller.travellerHero && !Hero.OneToOneConversationHero.HasMet).
+                        PlayerLine("Hey stranger, I'm on the hunt for someone").NpcLine("How can I help?").GotoDialogState("player_asks_about_clues_" + uniqueDialogId).
+                        NpcOption("Hey again, " + Hero.MainHero.Name.ToString() + " have any more questions?", () => Hero.OneToOneConversationHero == traveller.travellerHero && Hero.OneToOneConversationHero.HasMet).
+                            GotoDialogState("player_asks_about_clues_" + uniqueDialogId);
+
+                string travellerClueOptionsId = "player_asks_about_clues_" + uniqueDialogId;
+
+                DialogFlow clueOptionFlow;
+                foreach (Clue clue in _availableClues)
+                {
+                    clueOptionFlow = DialogFlow.CreateDialogFlow(travellerClueOptionsId, 600).BeginPlayerOptions().
+                        PlayerOption("Yea, I know..yada "+travellerClueOptionsId).
+                            Condition(() => !traveller.cluesAskedtoTraveller.Contains(clue)).BeginNpcOptions().
+                        NpcOption("I know this!", ()=> traveller.clueTrigger == clue).
+                        NpcOption("Doesn't ring any bells", () => traveller.clueTrigger != clue).NpcLine("Anything else?").GotoDialogState(travellerClueOptionsId);
+                }
+
+                return resultFlow;
+            }
 
             // Optional Overrides (virtual)
             protected override void RegisterEvents()
@@ -297,6 +404,7 @@ namespace PB_bounty_hunting
                 base.RegisterEvents();
                 CampaignEvents.WarDeclared.AddNonSerializedListener(this, new Action<IFaction, IFaction>(this.OnWarDeclared));
                 CampaignEvents.VillageBeingRaided.AddNonSerializedListener(this, new Action<Village>(this.OnVillageRaid));
+                CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener(this, new Action(this.OnBeforeMissionOpen));
             }
 
             private void OnWarDeclared(IFaction faction1, IFaction faction2)
@@ -399,6 +507,18 @@ namespace PB_bounty_hunting
 
             [SaveableField(50)]
             public pbTarget _target;
+
+            [SaveableField(60)]
+            public List<Clue> _availableClues;
+
+            [SaveableField(70)] 
+            public List<Intel> _intelOnTarget;
+
+            [SaveableField(80)]
+            public List<LocationCharacter> _travellerLocationCharacters;
+
+            //[SaveableField(90)]
+            //public Dictionary<Clue, bool> cluesKnown;
         }
     }
 }

@@ -64,7 +64,7 @@ namespace SC_Teaser_Quests
         //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver)
         {
-            if (issueGiver.CurrentSettlement == null || issueGiver.CurrentSettlement.OwnerClan.Kingdom.Name != new TextObject("Manalore") || !issueGiver.IsNotable || !issueGiver.CurrentSettlement.IsVillage || !issueGiver.CurrentSettlement.Village.Bound.IsTown)
+            if (issueGiver.CurrentSettlement == null /*|| issueGiver.CurrentSettlement.OwnerClan.Kingdom.Name != new TextObject("Manalore") */|| !issueGiver.IsNotable || !issueGiver.CurrentSettlement.IsVillage || !issueGiver.CurrentSettlement.Village.Bound.IsTown)
             {
                 return false;
             }
@@ -129,7 +129,7 @@ namespace SC_Teaser_Quests
             this._averageGrainPriceInCalradia = num2 / num;
         }
 
-        private const IssueBase.IssueFrequency HeadmanNeedsGrainIssueFrequency = IssueBase.IssueFrequency.VeryCommon;
+        private const IssueBase.IssueFrequency SC_HeadmanNeedsGrainIssueFrequency = IssueBase.IssueFrequency.VeryCommon;
 
         private const int TimeLimit = 10;
 
@@ -195,7 +195,7 @@ namespace SC_Teaser_Quests
             {
                 get
                 {
-                    TextObject textObject = new TextObject("{=sQBBOKDD}{ISSUE_SETTLEMENT} Needs Beskar", null);
+                    TextObject textObject = GameTexts.FindText("sc_quest_dialog_headmanneedsgrain_title");                        
                     textObject.SetTextVariable("ISSUE_SETTLEMENT", base.IssueSettlement.Name);
                     return textObject;
                 }

@@ -80,17 +80,17 @@ namespace radiantQuestTemplate
             }
 
             // <Required overrides (abstract)
-            public override TextObject Title => new TextObject("Template Quest Title"); //4-Update Quest naming
+            public override TextObject Title => GameTexts.FindText("quest_dialog_title");
 
-            public override TextObject Description => new TextObject("Help out the quest giver!"); //4-Update Quest naming
+            public override TextObject Description => GameTexts.FindText("quest_dialog_description");
 
             protected override TextObject IssueBriefByIssueGiver //3-Update quest acceptance text
             {
                 get
                 {
-                    TextObject result = new TextObject("This is the first dialoge after the player asks I've " +
-                        "heard you have an issue... I'm {TARGET.LINK} and this is {SETTLEMENT.LINK}");
-                     
+                    TextObject result = GameTexts.FindText("quest_dialog_issuebrief");
+
+
                     if (this.IssueOwner != null)
                     {
                         StringHelpers.SetCharacterProperties("TARGET", this.IssueOwner.CharacterObject, null, result, false);                        

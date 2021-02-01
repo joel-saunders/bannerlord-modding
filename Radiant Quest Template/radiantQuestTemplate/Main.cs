@@ -8,6 +8,7 @@ using TaleWorlds.Core;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.Library;
 
 namespace radiantQuestTemplate
 {
@@ -22,6 +23,8 @@ namespace radiantQuestTemplate
                 {
                     CampaignGameStarter gameStarter = (CampaignGameStarter)gameStarterObject;
                     gameStarter.AddBehavior(new RQTCampaignBehavior()); //can this be simplified?
+
+                    gameStarter.LoadGameTexts(BasePath.Name + "Modules/radiantQuestTemplate/ModuleData/quest_dialog_strings.xml");
                 }
                 catch (Exception e)
                 {
