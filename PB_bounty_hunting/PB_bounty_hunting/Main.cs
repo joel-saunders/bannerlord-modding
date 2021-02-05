@@ -22,6 +22,7 @@ namespace PB_bounty_hunting
                 {
                     CampaignGameStarter gameStarter = (CampaignGameStarter)gameStarterObject;
                     gameStarter.AddBehavior(new BountyHuntingCampaignBehavior()); //can this be simplified?
+
                 }
                 catch (Exception e)
                 {

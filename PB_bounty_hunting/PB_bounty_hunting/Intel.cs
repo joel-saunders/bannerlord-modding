@@ -3,7 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
-//using SandBox.Source.Missions;
+//using SandBox.Source.Missions.Handlers;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.CampaignSystem;
 using SandBox;
@@ -23,29 +23,29 @@ using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
 using TaleWorlds.CampaignSystem.SandBox.Issues;
 using NetworkMessages.FromServer;
-using TaleWorlds.ObjectSystem;
-using TaleWorlds.Library;
 
 namespace PB_bounty_hunting
 {
-    class pbTarget
-    {        
-        public pbTarget(BountyHuntingCampaignBehavior.BountyHuntingQuest quest)
+    class Intel
+    {
+        public enum IntelType
         {
-            this.locationofCrime = quest.QuestGiver.CurrentSettlement;
-            this.timeOfDayAvailable = BountyHuntingCampaignBehavior.BountyHuntingQuest.TimeOfDay.GetRandomElement<string>();
-            this.culture = quest.QuestGiver.Culture;
-            this.characterObject = (CharacterObject.Templates.GetRandomElement<CharacterObject>());
-            
+            Alibi = 0, //Why are they in the area
+            Background = 1,
+            Location = 2
+        }
+        public Intel(IntelType type)
+        {
+            this.Type = type;
+            this.FoundOutByPlayer = false;
         }
 
-        
+        public IntelType Type;
 
-        public CharacterObject characterObject;
-        public Settlement locationofCrime;
-        public Settlement hiddenLocation;
-        public string timeOfDayAvailable;
-        public CultureObject culture;
-        
+        public bool FoundOutByPlayer;
+
+        public string TravellerIntelDialog;
+
+        public string PlayerIntelDescriptionDialog;
     }
 }

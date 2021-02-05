@@ -63,14 +63,18 @@ namespace PB_bounty_hunting
 
         public class BountyHuntingCampaignBehviorIssueTypeDefiner : CampaignBehaviorBase.SaveableCampaignBehaviorTypeDefiner 
         {
-            public BountyHuntingCampaignBehviorIssueTypeDefiner() : base(0832638932) 
+            public BountyHuntingCampaignBehviorIssueTypeDefiner() : base(08326332) 
             {
             }
 
             protected override void DefineClassTypes()
             {
                 AddClassDefinition(typeof(BountyHuntingCampaignBehavior.BountyHuntingIssue), 1); 
-                AddClassDefinition(typeof(BountyHuntingCampaignBehavior.BountyHuntingQuest), 2); 
+                AddClassDefinition(typeof(BountyHuntingCampaignBehavior.BountyHuntingQuest), 2);
+                AddClassDefinition(typeof(pbTraveller), 3);
+                AddClassDefinition(typeof(pbTarget), 4);
+                AddClassDefinition(typeof(Clue), 5);
+                AddClassDefinition(typeof(Intel), 6);
             }
         }
         public enum TargetWanted
@@ -228,33 +232,28 @@ namespace PB_bounty_hunting
                 this._targetCrime = targetcrime;
                 this._targetWanted = targetwanted;
                 this._travellerVillage = SetTravellerVillage();
-                this._target = GenerateTarget(this);
+                this.Target = GenerateTarget(this);
                 this.GenerateCluesAndIntel();
                 this._travellers = GenerateTravellers();
                 this.SetDialogs();
                 this.InitializeQuestOnCreation();
                 InformationManager.DisplayMessage(new InformationMessage(this._travellerVillage.ToString()));
                 base.AddLog(new TextObject("The quest has begun!!! woooo!")); //4-Update Quest naming
-            }            
-            public enum TimeOfDay
-            {
-                DayOnly = 0,
-                NightOnly = 1,
-                Anytime = 2
             }
-            public enum Clue
+            public static List<String> TimeOfDay = new List<string>
             {
-                Location = 0,
-                TimeofDay = 1,
-                Culture = 2
-            }
+                "early morning",
+                "morning",
+                "noon",
+                "early afternoon",
+                "afternoon",
+                "late afternoon",
+                "evening",
+                "late night"
+            };
+            
 
-            public enum Intel
-            {
-                Alibi = 0,
-                Destination = 1,
-                Background = 2
-            }
+            
 
             private  void OnBeforeMissionOpen()
             {
@@ -295,35 +294,71 @@ namespace PB_bounty_hunting
 
             private void GenerateCluesAndIntel()
             {
-                this._availableClues = new List<Clue> { Clue.Culture, Clue.Location, Clue.TimeofDay };
+                this.questClues = new List<Clue>() 
+                { new Clue(Clue.ClueType.Culture, this), 
+                    new Clue(Clue.ClueType.Location, this) , 
+                    new Clue(Clue.ClueType.TimeofDay, this) };
 
-                //this.cluesKnown = new Dictionary<Clue, bool>();
-                //this.cluesKnown.Add(Clue.Culture, true);
-                //this.cluesKnown.Add(Clue.Location, true);
-                //this.cluesKnown.Add(Clue.TimeofDay, true);
 
-                this._intelOnTarget = new List<Intel> { Intel.Alibi, Intel.Background, Intel.Destination };
+                List<Intel> tempList = new List<Intel>()
+                { new Intel(Intel.IntelType.Alibi),
+                  new Intel(Intel.IntelType.Background),
+                  new Intel(Intel.IntelType.Location) };
+
+                this._intelOnTarget = new List<Intel>(tempList);
+
+                this.intelLeftToUse = new List<Intel>(tempList);
+
+                InformationManager.DisplayMessage(new InformationMessage("Intel count: "+this._intelOnTarget.Count.ToString()));
+                this.intelFoundOut = new List<Intel>();
             }
 
+            //Holds logic for clue and intel linking between travellers
             private List<pbTraveller> GenerateTravellers()
             {
                 List<pbTraveller> result = new List<pbTraveller>();
+                
+                bool clueTriggered;
 
                 int travellerCount = 4;
 
-                for(int i = 0; i < travellerCount; i++ )
+                //Make first traveller
+                Clue clue = this.questClues.GetRandomElement<Clue>();
+                Intel intel = this.intelLeftToUse.GetRandomElement<Intel>();
+                this.intelLeftToUse.Remove(intel);                
+                pbTraveller traveller = new pbTraveller(this, clue, intel);
+                result.Add(traveller);                
+
+                //Make a traveller for the traveller count
+                while(result.Count <= travellerCount)
                 {
-                    if (this._availableClues.Count > 0)
-                    {
-                        Clue travellerClue = this._availableClues.GetRandomElement<Clue>();
-                        result.Add(new pbTraveller(this, travellerClue));
-                        this._availableClues.Remove(travellerClue);
+                    InformationManager.DisplayMessage(new InformationMessage(this._intelOnTarget.Count.ToString()));
+                    //If no intel left to use, just create dummy traveller
+                    if (this.intelLeftToUse.Count > 0)
+                    {                        
+                        intel = this.intelLeftToUse.GetRandomElement<Intel>();
+                        this.intelLeftToUse.Remove(intel);
+
+                        //Clue? or intel of the last traveller?
+                        clueTriggered = MBRandom.Random.Next(0, 2) == 1;
+
+                        if(clueTriggered)
+                        {
+                            clue = this.questClues.GetRandomElement<Clue>();
+                            traveller = new pbTraveller(this, clue, intel);
+                            result.Add(traveller);
+                        }
+                        else 
+                        {
+                            traveller = new pbTraveller(this, traveller.intelKnown, intel);
+                            result.Add(traveller);
+                        }                        
                     }
-                    else
+                    else 
                     {
                         result.Add(new pbTraveller(this));
                     }
-                }
+                }                
 
                 return result;
             }
@@ -374,28 +409,116 @@ namespace PB_bounty_hunting
 
             private DialogFlow TravellerDialog(pbTraveller traveller, string uniqueDialogId)
             {
-
+                string travellerClueOptionsId = "player_asks_about_clues_" + uniqueDialogId;
 
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 600).
                     BeginNpcOptions().
                         NpcOption("Hello there, how can I help you?", () => Hero.OneToOneConversationHero == traveller.travellerHero && !Hero.OneToOneConversationHero.HasMet).
-                        PlayerLine("Hey stranger, I'm on the hunt for someone").NpcLine("How can I help?").GotoDialogState("player_asks_about_clues_" + uniqueDialogId).
-                        NpcOption("Hey again, " + Hero.MainHero.Name.ToString() + " have any more questions?", () => Hero.OneToOneConversationHero == traveller.travellerHero && Hero.OneToOneConversationHero.HasMet).
-                            GotoDialogState("player_asks_about_clues_" + uniqueDialogId);
+                            PlayerLine("Hey stranger, I'm on the hunt for someone").
+                            NpcLine("How can I help?").GotoDialogState(travellerClueOptionsId).
+                        NpcOption("Hey again " + Hero.MainHero.Name.ToString() + ", have any more questions?", () => Hero.OneToOneConversationHero == traveller.travellerHero && Hero.OneToOneConversationHero.HasMet).
+                            GotoDialogState(travellerClueOptionsId);
 
-                string travellerClueOptionsId = "player_asks_about_clues_" + uniqueDialogId;
 
-                DialogFlow clueOptionFlow;
-                foreach (Clue clue in _availableClues)
+
+                
+                //Make player options for each clue
+                foreach (Clue clue in this.questClues)
                 {
-                    clueOptionFlow = DialogFlow.CreateDialogFlow(travellerClueOptionsId, 600).BeginPlayerOptions().
-                        PlayerOption("Yea, I know..yada "+travellerClueOptionsId).
-                            Condition(() => !traveller.cluesAskedtoTraveller.Contains(clue)).BeginNpcOptions().
-                        NpcOption("I know this!", ()=> traveller.clueTrigger == clue).
-                        NpcOption("Doesn't ring any bells", () => traveller.clueTrigger != clue).NpcLine("Anything else?").GotoDialogState(travellerClueOptionsId);
+                    DialogFlow clueOptionFlow = DialogFlow.CreateDialogFlow(travellerClueOptionsId, 1000).GoBackToDialogState(travellerClueOptionsId).
+                        PlayerLine(clue.clueDescriptionDialog).
+                            Condition(() => !traveller.intelDiscoveredByPlayer && !traveller.cluesAskedtoTraveller.Contains(clue)).
+                            BeginNpcOptions().
+                        NpcOption(traveller.clueDialog, ()=> traveller.clueTrigger == clue).NpcLine("here's the intel I know").
+                            Consequence( delegate { this.UncoverIntel(traveller); }).CloseDialog().
+                        NpcOption("I see", () => traveller.clueTrigger != clue).
+                            NpcLine("what else?").
+                                Consequence(delegate { traveller.cluesAskedtoTraveller.Add(clue); }).GotoDialogState(travellerClueOptionsId);
+                    Campaign.Current.ConversationManager.AddDialogFlow(clueOptionFlow);
                 }
 
+                //make player options for each intel
+                //InformationManager.DisplayMessage(new InformationMessage(this._intelOnTarget.Count.ToString()));
+                foreach (Intel foundIntel in this._intelOnTarget)
+                {
+                    DialogFlow intelOptionFlow = DialogFlow.CreateDialogFlow(travellerClueOptionsId, 1000).GoBackToDialogState(travellerClueOptionsId).
+                        PlayerLine("I have intel that I found out").
+                            Condition(() => !traveller.intelDiscoveredByPlayer && this.intelFoundOut.Contains(foundIntel) && !traveller.intelAskedtoTraveller.Contains(foundIntel)).BeginNpcOptions().
+                        NpcOption("oh m gee that reminds me.", () => traveller.intelTrigger != null && traveller.intelTrigger == foundIntel).
+                            Consequence( delegate { this.UncoverIntel(traveller); }).
+                        NpcOption("beats me", () => traveller.intelTrigger == null || traveller.intelTrigger != foundIntel).NpcLine("What else").
+                            Consequence(delegate { traveller.intelAskedtoTraveller.Add(foundIntel); }).GotoDialogState(travellerClueOptionsId);
+
+                    Campaign.Current.ConversationManager.AddDialogFlow(intelOptionFlow);
+                }
+
+                DialogFlow exitOption = DialogFlow.CreateDialogFlow(travellerClueOptionsId, 1000).GoBackToDialogState(travellerClueOptionsId).BeginPlayerOptions().
+                    PlayerOption("Could you repeat what you told me about the target?").
+                            Condition(()=> traveller.intelDiscoveredByPlayer).
+                        NpcLine("Sure, definitely. ayayayayayay").PlayerLine("Cool thanks.").NpcLine("No problem, have a good one.").
+                    
+                    PlayerOption("ahhh never mind").
+                            Condition(()=> this.CheckIfTheresSomethingToAsk(traveller)).
+                        NpcLine("Alright, well let me know if you find out any other information.").
+                    
+                    PlayerOption("Nothing new to ask you, I need to get more information").
+                            Condition(()=> !this.CheckIfTheresSomethingToAsk(traveller)).
+                        CloseDialog();
+                Campaign.Current.ConversationManager.AddDialogFlow(exitOption);
+
                 return resultFlow;
+            }
+
+            private void UncoverIntel(pbTraveller traveller)
+            {
+                Intel uncoveredIntel = traveller.intelKnown;
+                this.intelFoundOut.Add(uncoveredIntel);
+                traveller.intelDiscoveredByPlayer = true;
+
+                TextObject logText = new TextObject();
+
+                switch(uncoveredIntel.Type)
+                {
+                    case Intel.IntelType.Alibi:
+                        logText = new TextObject("You discovered the target's alibi");
+                        break;
+                    case Intel.IntelType.Background:
+                        logText = new TextObject("You discovered the target's Background");
+                        break;
+                    case Intel.IntelType.Location:
+                        logText = new TextObject("You discovered the target's Location");
+                        break;
+                }
+
+                base.AddLog(logText);
+            }
+
+            private bool CheckIfTheresSomethingToAsk(pbTraveller traveller)
+            {
+                //if(traveller.intelDiscoveredByPlayer)
+                //{
+                //    return false;
+                //}
+                if (this.intelFoundOut != null)
+                {
+                    foreach (Intel intel in this.intelFoundOut)
+                    {
+                        if(!traveller.intelAskedtoTraveller.Contains(intel))
+                        {
+                            return true;
+                        }
+                    }
+                }
+
+                foreach(Clue clue in this.questClues)
+                {
+                    if(!traveller.cluesAskedtoTraveller.Contains(clue))
+                    {
+                        return true;
+                    }
+                }
+
+                return false;
             }
 
             // Optional Overrides (virtual)
@@ -506,10 +629,10 @@ namespace PB_bounty_hunting
             public List<pbTraveller> _travellers;
 
             [SaveableField(50)]
-            public pbTarget _target;
+            public pbTarget Target;
 
-            [SaveableField(60)]
-            public List<Clue> _availableClues;
+            //[SaveableField(60)]
+            //public List<Clue> _availableClues;
 
             [SaveableField(70)] 
             public List<Intel> _intelOnTarget;
@@ -517,8 +640,17 @@ namespace PB_bounty_hunting
             [SaveableField(80)]
             public List<LocationCharacter> _travellerLocationCharacters;
 
+            [SaveableField(90)]
+            public List<Clue> questClues;
+
+            [SaveableField(100)]
+            public List<Intel> intelFoundOut;
+
             //[SaveableField(90)]
             //public Dictionary<Clue, bool> cluesKnown;
+
+            [SaveableField(110)]
+            public List<Intel> intelLeftToUse;
         }
     }
 }
