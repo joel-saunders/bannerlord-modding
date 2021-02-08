@@ -33,12 +33,16 @@ namespace SC_Teaser_Quests
                 try
                 {
                     CampaignGameStarter gameStarter = (CampaignGameStarter)gameStarterObject;
+
+                    gameStarter.LoadGameTexts(BasePath.Name + "Modules/SC_Teaser_Quests/ModuleData/quest_dialog_strings.xml");
+                    gameStarter.LoadGameTexts(BasePath.Name + "Modules/SC_Teaser_Quests/ModuleData/quest_dialog_VillageNeedsGrain.xml");
+                    gameStarter.LoadGameTexts(BasePath.Name + "Modules/SC_Teaser_Quests/ModuleData/quest_dialog_HeadmansDaughter.xml");
+                    
                     gameStarter.AddBehavior(new SC_HeadmanNeedsGrainIssueBehavior());
                     gameStarter.AddBehavior(new SC_NotableWantsDaughterFoundIssueBehavior());
                     gameStarter.AddBehavior(new SC_NearbyBanditBaseIssueBehavior());
 
-                    gameStarter.LoadGameTexts(BasePath.Name+"Modules/SC_Teaser_Quests/ModuleData/quest_dialog_strings.xml");
-                    gameStarter.LoadGameTexts(BasePath.Name + "Modules/SC_Teaser_Quests/ModuleData/quest_dialog_strings_HeadmanNeedsGrain.xml");
+                    
                 }
                 catch (Exception e)
                 {

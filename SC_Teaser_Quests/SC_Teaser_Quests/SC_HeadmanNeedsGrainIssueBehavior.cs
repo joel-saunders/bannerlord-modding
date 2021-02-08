@@ -82,7 +82,7 @@ namespace SC_Teaser_Quests
 
         private IssueBase OnSelected(PotentialIssueData pid, Hero issueOwner)
         {
-            InformationManager.DisplayMessage(new InformationMessage("Mando quest generated."));
+            //InformationManager.DisplayMessage(new InformationMessage("Mando quest generated."));
             return new SC_HeadmanNeedsGrainIssueBehavior.SC_HeadmanNeedsGrainIssue(issueOwner);        
         }
 

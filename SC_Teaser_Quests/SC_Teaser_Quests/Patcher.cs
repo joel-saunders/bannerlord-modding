@@ -21,5 +21,15 @@ namespace SC_Teaser_Quests.Patch
                 return;
             }
         }
+
+        [HarmonyPatch(typeof(NotableWantsDaughterFoundIssueBehavior), "ConditionsHold")]
+        internal class PatchHeadmansDaughterQuest
+        {
+            public static void Postfix(Hero issueGiver, ref bool __result)
+            {
+                __result = false;
+                return;
+            }
+        }
     }
 }

@@ -143,11 +143,12 @@ namespace SC_Teaser_Quests
 				};
 				}
 
-				protected override TextObject IssueBriefByIssueGiver
-				{
+				protected override TextObject IssueBriefByIssueGiver //TOUPDATE SC_HeadmansDaughter_dialog_IssueBrief
+			{
 					get
 					{
-						TextObject textObject = new TextObject("{=x9VgLEzi}Yes... I've suffered a great misfortune. My daughter, a headstrong girl, has been bewitched by this never-do-well. I told her to stop seeing him but she wouldn't listen! Now she's missing - I'm sure she's been abducted by him! I'm offering a bounty of {BASE_REWARD_GOLD}{GOLD_ICON} to anyone who brings her back. Please {?PLAYER.GENDER}ma'am{?}sir{\\?}! Don't let a father's heart be broken.", null);
+					//TextObject textObject = new TextObject("{=x9VgLEzi}Yes... I've suffered a great misfortune. My daughter, a headstrong girl, has been bewitched by this never-do-well. I told her to stop seeing him but she wouldn't listen! Now she's missing - I'm sure she's been abducted by him! I'm offering a bounty of {BASE_REWARD_GOLD}{GOLD_ICON} to anyone who brings her back. Please {?PLAYER.GENDER}ma'am{?}sir{\\?}! Don't let a father's heart be broken.", null);
+						TextObject textObject = GameTexts.FindText("SC_HeadmansDaughter_dialog_IssueBrief");
 						StringHelpers.SetCharacterProperties("PLAYER", CharacterObject.PlayerCharacter, null, textObject, false);
 						textObject.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
 						textObject.SetTextVariable("BASE_REWARD_GOLD", this.RewardGold);
@@ -155,24 +156,24 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				protected override TextObject IssueAcceptByPlayer
-				{
+				protected override TextObject IssueAcceptByPlayer //TOUPDATE SC_HeadmansDaughter_dialog_IssueAcceptedByPlayer
+			{
 					get
 					{
 						return new TextObject("{=35w6g8gM}Tell me more. What's wrong with the man? ", null);
 					}
 				}
 
-				protected override TextObject IssueQuestSolutionExplanationByIssueGiver
-				{
+				protected override TextObject IssueQuestSolutionExplanationByIssueGiver //TOUPDATE SC_HeadmansDaughter_dialog_SolutionExplanation
+			{
 					get
 					{
 						return new TextObject("{=IY5b9vZV}Everything is wrong. He is from a low family, the kind who is always involved in some land fraud scheme, or seen dealing with known bandits. Every village has a black sheep like that but I never imagined he would get his hooks into my daughter!", null);
 					}
 				}
 
-				protected override TextObject IssueAlternativeSolutionExplanationByIssueGiver
-				{
+				protected override TextObject IssueAlternativeSolutionExplanationByIssueGiver //TOUPDATE SC_HeadmansDaughter_dialog_IssueAlternativeSolutionExplanationByIssueGiver
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=v0XsM7Zz}If you send your best tracker with a few men, I am sure they will find my girl and be back to you in no more than {ALTERNATIVE_SOLUTION_WAIT_DAYS} days.", null);
@@ -181,24 +182,24 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				protected override TextObject IssuePlayerResponseAfterAlternativeExplanation
-				{
+				protected override TextObject IssuePlayerResponseAfterAlternativeExplanation //TOUPDATE SC_HeadmansDaughter_dialog_IssuePlayerResponseAfterAlternativeExplanation
+			{
 					get
 					{
 						return new TextObject("{=Ldp6ckgj}Don't worry, either I or one of my companions should be able to find her and see what's going on.", null);
 					}
 				}
 
-				protected override TextObject IssueQuestSolutionAcceptByPlayer
-				{
+				protected override TextObject IssueQuestSolutionAcceptByPlayer //TOUPDATE SC_HeadmansDaughter_dialog_IssueQuestSolutionAcceptByPlayer
+			{
 					get
 					{
 						return new TextObject("{=uYrxCtDa}I should be able to find her and see what's going on.", null);
 					}
 				}
 
-				protected override TextObject IssueAlternativeSolutionAcceptByPlayer
-				{
+				protected override TextObject IssueAlternativeSolutionAcceptByPlayer //TOUPDATE SC_HeadmansDaughter_dialog_IssueAlternativeSolutionAcceptByPlayer
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=WSrGHkal}I will have one of my trackers and {REQUIRED_TROOP_AMOUNT} of my men to find your daughter.", null);
@@ -207,8 +208,8 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				protected override TextObject IssueAlternativeSolutionResponseByIssueGiver
-				{
+				protected override TextObject IssueAlternativeSolutionResponseByIssueGiver //TOUPDATE SC_HeadmansDaughter_dialog_IssueAlternativeSolutionResponseByIssueGiver 
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=Hhd3KaKu}Thank you, my {?PLAYER.GENDER}lady{?}lord{\\?}. If your men can find my girl and bring her back to me, I will be so grateful. I will pay you {BASE_REWARD_GOLD}{GOLD_ICON} for your trouble.", null);
@@ -219,8 +220,8 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				protected override TextObject AlternativeSolutionStartLog
-				{
+				protected override TextObject AlternativeSolutionStartLog //TOUPDATE SC_HeadmansDaughter_dialog_AlternativeSolutionStartLog
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=6OmbzoBs}{ISSUE_GIVER.LINK}, a merchant from {ISSUE_GIVER_SETTLEMENT}, has told you that {?ISSUE_GIVER.GENDER}her{?}his{\\?} daughter has gone missing. {?ISSUE_GIVER.GENDER}She{?}He{\\?} offers a bounty of {BASE_REWARD_GOLD}{GOLD_ICON} to anyone who finds her and brings her back. You choose {COMPANION.LINK} and {REQUIRED_TROOP_AMOUNT} men to search for her and bring her back. You expect them to complete this task and return in {ALTERNATIVE_SOLUTION_DAYS} days.", null);
@@ -256,8 +257,8 @@ namespace SC_Teaser_Quests
 					base.AlternativeSolutionHero.AddSkillXp(skill, (float)((int)(500f + 1000f * base.IssueDifficultyMultiplier)));
 				}
 
-				protected override TextObject AlternativeSolutionEndLog
-				{
+				protected override TextObject AlternativeSolutionEndLog //TOUPDATE SC_HeadmansDaughter_dialog_AlternativeSolutionEndLog
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=MaXA5HJi}Your companions report that the {ISSUE_GIVER.LINK}'s daughter returns to {?ISSUE_GIVER.GENDER}her{?}him{\\?} safe and sound. {?ISSUE_GIVER.GENDER}She{?}He{\\?} is happy and sends {?ISSUE_GIVER.GENDER}her{?}his{\\?} regards with a large pouch of {BASE_REWARD_GOLD}{GOLD_ICON}.", null);
@@ -276,18 +277,22 @@ namespace SC_Teaser_Quests
 					base.IssueOwner.CurrentSettlement.Village.TradeBound.Town.Security += 10f;
 				}
 
-				public override TextObject Title
-				{
+				public override TextObject Title //TOUPDATE SC_HeadmansDaughter_dialog_IssueTitle
+			{
 					get
 					{
-						TextObject textObject = new TextObject("SW: {=kr68V5pm}{ISSUE_GIVER.NAME} wants {?ISSUE_GIVER.GENDER}her{?}his{\\?} daughter found", null);
+						//MBTextManager.SetTextVariable("ISSUE_GIVER", GameTexts.FindText(textId));						
+						//TextObject textObject = new TextObject("SW: {=kr68V5pm}{ISSUE_GIVER.NAME} wants {?ISSUE_GIVER.GENDER}her{?}his{\\?} daughter found", null);
+						string textId = "SC_HeadmansDaughter_dialog_IssueTitle";
+						TextObject textObject = GameTexts.FindText(textId);						
 						StringHelpers.SetCharacterProperties("ISSUE_GIVER", base.IssueOwner.CharacterObject, null, textObject, false);
+						
 						return textObject;
 					}
 				}
 
-				public override TextObject Description
-				{
+				public override TextObject Description //TOUPDATE SC_HeadmansDaughter_dialog_IssueDescription
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=SkzM5eSv}{ISSUE_GIVER.LINK}'s daughter is missing. {?ISSUE_GIVER.GENDER}She{?}He{\\?} is offering a substantial reward to find the young woman and bring her back safely.", null);
@@ -296,8 +301,8 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				public override TextObject IssueAsRumorInSettlement
-				{
+				public override TextObject IssueAsRumorInSettlement //TOUPDATE SC_HeadmansDaughter_dialog_IssueAsRumorInSettlement
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=7RyXSkEE}Wouldn't want to be the poor lovesick sap who ran off with {QUEST_GIVER.NAME}'s daughter.", null);
@@ -312,7 +317,10 @@ namespace SC_Teaser_Quests
 
 				protected override QuestBase GenerateIssueQuest(string questId)
 				{
-					return new SC_NotableWantsDaughterFoundIssueBehavior.SC_NotableWantsDaughterFoundIssueQuest(questId, base.IssueOwner, CampaignTime.DaysFromNow(20f), this.RewardGold, base.IssueDifficultyMultiplier);
+					SC_NotableWantsDaughterFoundIssueBehavior.SC_NotableWantsDaughterFoundIssueQuest result = new SC_NotableWantsDaughterFoundIssueBehavior.SC_NotableWantsDaughterFoundIssueQuest(questId, base.IssueOwner, CampaignTime.DaysFromNow(20f), this.RewardGold, base.IssueDifficultyMultiplier);
+					//InformationManager.DisplayMessage(new InformationMessage("String from XML: "+GameTexts.FindText("SC_HeadmansDaughter_dialog_IssueTitle")));
+					//InformationManager.DisplayMessage(new InformationMessage("Title: "+result.Title));
+					return result;
 				}
 
 				public override IssueBase.IssueFrequency GetFrequency()
@@ -378,8 +386,8 @@ namespace SC_Teaser_Quests
 
 			internal class SC_NotableWantsDaughterFoundIssueQuest : QuestBase
 			{
-				public override TextObject Title
-				{
+				public override TextObject Title //TOUPDATE SC_HeadmansDaughter_dialog_QuestTitle
+			{
 					get
 					{
 						TextObject textObject = new TextObject("SW {=PDhmSieV}{QUEST_GIVER.NAME}'s Kidnapped Daughter at {SETTLEMENT}", null);
@@ -405,8 +413,8 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				private TextObject _playerStartsQuestLogText
-				{
+				private TextObject _playerStartsQuestLogText //TOUPDATE SC_HeadmansDaughter_dialog_FirstQuestLog
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=1jExD58d}{QUEST_GIVER.LINK}, a merchant from {SETTLEMENT_NAME}, told you that {?QUEST_GIVER.GENDER}her{?}his{\\?} daughter {TARGET_HERO.LINK} has either been abducted or run off with a local rogue. {?QUEST_GIVER.GENDER}She{?}He{\\?} is offering a bounty of {BASE_REWARD_GOLD}{GOLD_ICON} to anyone who finds the young woman and brings her back. You have agreed to search for her and bring her back to {SETTLEMENT_NAME}. If you cannot find their tracks when you exit settlement, you should visit the nearby villages of {SETTLEMENT_NAME} to look for clues and tracks of the kidnapper.", null);
@@ -419,8 +427,8 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				private TextObject _successQuestLogText
-				{
+				private TextObject _successQuestLogText //TOUPDATE SC_HeadmansDaughter_dialog_successQuestLogText
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=asVE53ac}Daughter returns to {QUEST_GIVER.LINK}. {?QUEST_GIVER.GENDER}She{?}He{\\?} is happy. Sends {?QUEST_GIVER.GENDER}her{?}his{\\?} regards with a large pouch of {BASE_REWARD}{GOLD_ICON}.", null);
@@ -431,8 +439,8 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				private TextObject _failQuestLogText
-				{
+				private TextObject _failQuestLogText //TOUPDATE SC_HeadmansDaughter_dialog_failQuestLogText
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=ak2EMWWR}You failed to bring the daughter back to her {?QUEST_GIVER.GENDER}mother{?}father{\\?} as promised to {QUEST_GIVER.LINK}. {QUEST_GIVER.LINK} is furious", null);
@@ -441,8 +449,8 @@ namespace SC_Teaser_Quests
 					}
 				}
 
-				private TextObject _questCanceledWarDeclaredLog
-				{
+				private TextObject _questCanceledWarDeclaredLog //TOUPDATE SC_HeadmansDaughter_dialog_questCanceledWarDeclaredLog
+			{
 					get
 					{
 						TextObject textObject = new TextObject("{=vW6kBki9}Your clan is now at war with {QUEST_GIVER.LINK}'s realm. Your agreement with {QUEST_GIVER.LINK} is canceled.", null);
@@ -518,8 +526,8 @@ namespace SC_Teaser_Quests
 					return characterObject;
 				}
 
-				protected override void SetDialogs()
-				{
+				protected override void SetDialogs() //TOUPDATE SC_HeadmansDaughter_dialog_QuestGiverDiscuss1 - 5
+			{
 					TextObject textObject = new TextObject("{=PZq1EMcx}Thank you for your help. I am still very worried about my girl {TARGET_HERO.LINK}. Please find her and bring her back to me as soon as you can.", null);
 					StringHelpers.SetCharacterProperties("TARGET_HERO", this._daughterHero.CharacterObject, null, textObject, false);
 					TextObject npcText = new TextObject("{=sglD6abb}Please! Bring my daughter back.", null);
@@ -613,8 +621,8 @@ namespace SC_Teaser_Quests
 					this._task = this.GetPersuasionTask();
 				}
 
-				private DialogFlow GetRougeDialogFlow()
-				{
+				private DialogFlow GetRougeDialogFlow() //TOUPDATE SC_HeadmansDaughter_dialog_RougeDialog
+			{
 					TextObject textObject = new TextObject("{=ovFbMMTJ}Who are you? Are you one of the bounty hunters sent by {QUEST_GIVER.LINK} to track us? Like we're animals or something? Look friend, we have done nothing wrong. As you may figured out already, this woman and I, we love each other. I didn't force her to do anything.[ib:closed]", null);
 					StringHelpers.SetCharacterProperties("QUEST_GIVER", this.QuestGiver.CharacterObject, null, textObject, false);
 					TextObject textObject2 = new TextObject("{=D25oY3j1}Thank you {?PLAYER.GENDER}lady{?}sir{\\?}. For your kindness and understanding. We won't forget this.", null);
@@ -655,8 +663,8 @@ namespace SC_Teaser_Quests
 					return dialogFlow;
 				}
 
-				private DialogFlow GetDaughterAfterFightDialog()
-				{
+				private DialogFlow GetDaughterAfterFightDialog() //TOUPDATE SC_HeadmansDaughter_dialog_DaughterDialogAfterFight
+			{
 					TextObject npcText = new TextObject("{=MN2v1AZQ}I hate you! You killed him! I can't believe it!. I will hate you with all my heart till my dying days. ", null);
 					TextObject npcText2 = new TextObject("{=TTkVcObg}What choice do I have you heartless bastard![rb:very_negative]", null);
 					TextObject textObject = new TextObject("{=XqsrsjiL}I did what I had to do. Pack up, you need to go.", null);
@@ -667,8 +675,8 @@ namespace SC_Teaser_Quests
 					}).CloseDialog();
 				}
 
-				private DialogFlow GetDaughterAfterAcceptDialog()
-				{
+				private DialogFlow GetDaughterAfterAcceptDialog() //TOUPDATE naaa....
+			{
 					TextObject textObject = new TextObject("{=0Wg00sfN}Thank you, {?PLAYER.GENDER}madam{?}sir{\\?}. We will be moving immediately.", null);
 					StringHelpers.SetCharacterProperties("PLAYER", CharacterObject.PlayerCharacter, null, textObject, false);
 					TextObject playerText = new TextObject("{=kUReBc04}Good.", null);
@@ -680,16 +688,16 @@ namespace SC_Teaser_Quests
 					return CharacterObject.OneToOneConversationCharacter == this._daughterHero.CharacterObject && this._acceptedDaughtersEscape;
 				}
 
-				private DialogFlow GetDaughterAfterPersuadedDialog()
-				{
+				private DialogFlow GetDaughterAfterPersuadedDialog() //TOUPDATE nope
+			{
 					TextObject textObject = new TextObject("{=B8bHpJRP}You are right, {?PLAYER.GENDER}my lady{?}sir{\\?}. I should be moving immediately.", null);
 					StringHelpers.SetCharacterProperties("PLAYER", CharacterObject.PlayerCharacter, null, textObject, false);
 					TextObject playerText = new TextObject("{=kUReBc04}Good.", null);
 					return DialogFlow.CreateDialogFlow("start", 125).NpcLine(textObject, null, null).Condition(new ConversationSentence.OnConditionDelegate(this.daughter_conversation_after_persuaded_on_condition)).PlayerLine(playerText, null).CloseDialog();
 				}
 
-				private DialogFlow GetDaughterDialogWhenVillageRaid()
-				{
+				private DialogFlow GetDaughterDialogWhenVillageRaid() //TOUPDATE naaa
+			{
 					return DialogFlow.CreateDialogFlow("start", 125).NpcLine(new TextObject("{=w0HPC53e}Who are you? What do you want from me?", null), null, null).Condition(() => this._villageIsRaidedTalkWithDaughter).PlayerLine(new TextObject("{=iRupMGI0}Calm down! Your father has sent me to find you.", null), null).NpcLine(new TextObject("{=dwNquUNr}My father? Oh, thank god! I saw terrible things. They took my beloved one and slew many innocents without hesitation.", null), null, null).PlayerLine("{=HtAr22re}Try to forget all about these and return to your father's house.", null).NpcLine("{=FgSIsasF}Yes, you are right. I shall be on my way...", null, null).Consequence(delegate
 					{
 						Campaign.Current.ConversationManager.ConversationEndOneShot += delegate ()
@@ -707,8 +715,8 @@ namespace SC_Teaser_Quests
 					return CharacterObject.OneToOneConversationCharacter == this._daughterHero.CharacterObject && this._isDaughterPersuaded;
 				}
 
-				private DialogFlow GetRougeAfterAcceptDialog()
-				{
+				private DialogFlow GetRougeAfterAcceptDialog() //TOUPDATE nono
+			{
 					TextObject textObject = new TextObject("{=wlKtDR2z}Thank you, {?PLAYER.GENDER}my lady{?}sir{\\?}.", null);
 					StringHelpers.SetCharacterProperties("PLAYER", CharacterObject.PlayerCharacter, null, textObject, false);
 					return DialogFlow.CreateDialogFlow("start", 125).NpcLine(textObject, null, null).Condition(new ConversationSentence.OnConditionDelegate(this.rogue_conversation_after_accept_on_condition)).PlayerLine(new TextObject("{=0YJGvJ7o}You should leave now.", null), null).NpcLine(new TextObject("{=6Q4cPOSG}Yes, we will.", null), null, null).CloseDialog();
@@ -719,8 +727,8 @@ namespace SC_Teaser_Quests
 					return CharacterObject.OneToOneConversationCharacter == this._rogueHero.CharacterObject && this._acceptedDaughtersEscape;
 				}
 
-				private DialogFlow GetRogueAfterPersuadedDialog()
-				{
+				private DialogFlow GetRogueAfterPersuadedDialog() //TOUPDATE nanana
+			{
 					TextObject textObject = new TextObject("{=GFt9KiHP}You are right. Maybe we need to persuade {QUEST_GIVER.NAME}", null);
 					StringHelpers.SetCharacterProperties("QUEST_GIVER", this.QuestGiver.CharacterObject, null, textObject, false);
 					TextObject playerText = new TextObject("{=btJkBTSF}I am sure you can solve it.", null);
@@ -732,8 +740,8 @@ namespace SC_Teaser_Quests
 					return CharacterObject.OneToOneConversationCharacter == this._rogueHero.CharacterObject && this._isDaughterPersuaded;
 				}
 
-				protected override void OnTimedOut()
-				{
+				protected override void OnTimedOut() //TOUPDATE SC_HeadmansDaughter_dialog_timeoutFailQuestLog
+			{
 					this.ApplyDeliveryRejectedFailConsequences();
 					TextObject textObject = new TextObject("{=KAvwytDK}You didn't bring {DAUGHTER.LINK} to {QUEST_GIVER.LINK}. {?QUEST_GIVER.GENDER}she{?}he{\\?} must be furious.", null);
 					StringHelpers.SetCharacterProperties("QUEST_GIVER", this.QuestGiver.CharacterObject, null, textObject, false);
@@ -845,8 +853,8 @@ namespace SC_Teaser_Quests
 					Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, true, false, false, new MissionFightHandler.OnFightEndDelegate(this.StartConversationAfterFight), true, null, null, null, null);
 				}
 
-				private void StartConversationAfterFight(bool isPlayerSideWon)
-				{
+				private void StartConversationAfterFight(bool isPlayerSideWon) //TOUPDATE SC_HeadmansDaughter_dialog_rougeBeatPlayerFailLog
+			{
 					if (isPlayerSideWon)
 					{
 						this._didPlayerBeatRouge = true;
@@ -861,8 +869,8 @@ namespace SC_Teaser_Quests
 					this._isQuestTargetMission = false;
 				}
 
-				private void AddPersuasionDialogs(DialogFlow dialog)
-				{
+				private void AddPersuasionDialogs(DialogFlow dialog) //TOUPDATE
+			{
 					TextObject textObject = new TextObject("{=ob5SejgJ}I will not abandon my love, {?PLAYER.GENDER}lady{?}sir{\\?}!", null);
 					StringHelpers.SetCharacterProperties("PLAYER", CharacterObject.PlayerCharacter, null, textObject, false);
 					TextObject textObject2 = new TextObject("{=cqe8FU8M}{?QUEST_GIVER.GENDER}She{?}He{\\?} cares nothing about me! Only about {?QUEST_GIVER.GENDER}her{?}his{\\?} reputation in our district.", null);
@@ -1076,8 +1084,8 @@ namespace SC_Teaser_Quests
 					return false;
 				}
 
-				private PersuasionTask GetPersuasionTask()
-				{
+				private PersuasionTask GetPersuasionTask() //TOUPDATE SC_HeadmansDaughter_dialog_DaughterPersuasionOption1 - 4
+			{
 					PersuasionTask persuasionTask = new PersuasionTask(0);
 					persuasionTask.FinalFailLine = new TextObject("{=5aDlmdmb}No... No. It does not make sense.", null);
 					persuasionTask.TryLaterLine = TextObject.Empty;
@@ -1121,8 +1129,8 @@ namespace SC_Teaser_Quests
 					ConversationManager.EndPersuasion();
 				}
 
-				private void OnSettlementLeft(MobileParty party, Settlement settlement)
-				{
+				private void OnSettlementLeft(MobileParty party, Settlement settlement) //TOUPDATE
+			{
 					if (party.IsMainParty && settlement == this.QuestGiver.CurrentSettlement && this._exitedQuestSettlementForTheFirstTime)
 					{
 						if (this.DoesMainPartyHasEnoughScoutingSkill)
@@ -1210,8 +1218,8 @@ namespace SC_Teaser_Quests
 					return new LocationCharacter(new AgentData(new SimpleAgentOrigin(character, -1, null, default(UniqueTroopDescriptor))).Monster(tuple.Item2), new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddCompanionBehaviors), "common_area_2", true, relation, tuple.Item1, false, false, null, false, true, true);
 				}
 
-				private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero)
-				{
+				private void OnSettlementEntered(MobileParty party, Settlement settlement, Hero hero) //TOUPDATE nonono
+			{
 					if (party != null && party.IsMainParty && settlement.IsVillage)
 					{
 						if (this._villagesAndAlreadyVisitedBooleans.ContainsKey(settlement.Village) && !this._villagesAndAlreadyVisitedBooleans[settlement.Village])
