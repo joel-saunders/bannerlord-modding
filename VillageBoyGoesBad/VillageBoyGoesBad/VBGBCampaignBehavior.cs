@@ -283,7 +283,7 @@ namespace VillageBoyGoesBad
             }
             private void SetGameMenus()
             {
-                base.AddGameMenu("pb_vbgb_son_unconsious", new TextObject("After a few moments, Notable's son stands up and comes to his senses."), null);
+                base.AddGameMenu("pb_vbgb_son_unconsious", new TextObject("After a few moments, "+this._headmansSon.FirstName+"stands up and comes to his senses."), null);
                 base.AddGameMenuOption("pb_vbgb_son_unconsious", "pb_vbgb_son_unconsious_opiton", new TextObject("Talk with notables son"),
                     delegate (MenuCallbackArgs args)
                     {
@@ -479,18 +479,86 @@ namespace VillageBoyGoesBad
                 //return resultFlow;
 
 
-                TextObject npcCostLine = new TextObject("If you can pay me. {GOLD_COST} {GOLD_ICON}. Unless you have a Companion that could help me out.");
+                TextObject npcCostLine = new TextObject("If you cover the cost of {GOLD_COST} {GOLD_ICON} the boy can go free. Alternatively, if you have a companion that could help me out...");
                 npcCostLine.SetTextVariable("GOLD_COST", this.gangLeaderPayoffNeeded.ToString());
                 npcCostLine.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
 
-                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options").
-                    PlayerLine("Hey, can I take your new guy?").Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).BeginNpcOptions().
-                    NpcOption("Alright, let's talk", () => this._gangLeader.GetRelationWithPlayer() >= -10).
-                        NpcLine(npcCostLine).
+                DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options", 600).
+                    PlayerLine("I would like to discuess " + this._headmansSon.FirstName + " and his position in your businesses?").Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).BeginNpcOptions().
+                    NpcOption("Sure. It will however cost you, one way or the other.", () => this._gangLeader.GetRelationWithPlayer() >= -10 && this._gangLeader.GetRelationWithPlayer() < 20).
+                        NpcLine(npcCostLine).BeginPlayerOptions().
+                            PlayerOption("I do have a companion whose services I could lend to you.").ClickableCondition(player_has_companion_rouge_enough).
+                                NpcLine("I'll need them for 5 days. Who is it that you're sending me?").GotoDialogState("pb_alternative_solution_rogue_companion_list").GoBackToDialogState("pb_alternative_solution_rogue_companion_list_RETURN").
+                                PlayerLine("And "+this._headmansSon.FirstName+" is sent home right?").
+                                NpcLine("Of course, I'll have my men tell him he isn't fit for this life").Consequence(alternative_solution_begins).NpcLine("Anything Else?").GoBackToDialogState("hero_main_options").
+                            PlayerOption("We have a deal. I'll pay and the son walks free.").ClickableCondition(player_can_afford_gang_leader_payoff).
+                                NpcLine("Excellent, he's all yours. Happy doing business with you.").Consequence(player_completes_quest_by_payment).
+                                NpcLine("Anything else I can help you with, friend?").GotoDialogState("hero_main_options").
+                            PlayerOption("No, I'm not willing to pay that.").NpcLine("Fine by me.").NpcLine("Anything Else?").GotoDialogState("hero_main_options").
                     NpcOption("Naaaa, I don't like you", () => this._gangLeader.GetRelationWithPlayer() < -10).NpcLine("Anything else?").GotoDialogState("hero_main_options");
 
 
                 return resultFlow;
+            }
+
+            private void alternative_solution_begins()
+            {
+
+            }
+            private void player_completes_quest_by_payment()
+            {
+                GiveGoldAction.ApplyBetweenCharacters(Hero.MainHero, this._gangLeader, this.gangLeaderPayoffNeeded);
+                base.CompleteQuestWithSuccess();
+            }
+            private bool player_has_companion_rouge_enough(out TextObject explanation)
+            {
+                bool flag = false;
+                explanation = new TextObject("You do not have a companion high with enough rogeury skill.");
+                this._eligibleCompanionsForRogeury = new List<Hero>();
+
+
+                foreach (TroopRosterElement troop in MobileParty.MainParty.MemberRoster)
+                {
+                    if(troop.Character.IsHero && !troop.Character.HeroObject.IsOccupiedByAnEvent() && troop.Character.GetSkillValue(DefaultSkills.Roguery) > 30)
+                    {
+                        this._eligibleCompanionsForRogeury.Add(troop.Character.HeroObject);
+                        if(!flag)
+                        {
+                            flag = true;
+                            explanation = new TextObject("You have a companion with enough Rogeury skill.");
+                        }
+                    }
+                }
+
+                if(this._eligibleCompanionsForRogeury.Count > 0)
+                {
+                    this.CreateDialogsForEachAvailableRogueCompanions(this._eligibleCompanionsForRogeury);
+                }
+
+                return flag;
+            }
+
+            private void CreateDialogsForEachAvailableRogueCompanions(List<Hero> rogueCompanions)
+            {
+                foreach(Hero companion in rogueCompanions)
+                {
+                    DialogFlow dialog = DialogFlow.CreateDialogFlow("pb_alternative_solution_rogue_companion_list", 1000).GoBackToDialogState("pb_alternative_solution_rogue_companion_list").
+                        PlayerLine(companion.Name.ToString()).GotoDialogState("pb_alternative_solution_rogue_companion_list_RETURN");
+
+                    Campaign.Current.ConversationManager.AddDialogFlow(dialog);
+                }
+            }
+
+            private bool player_can_afford_gang_leader_payoff(out TextObject explanation)
+            {
+                if(Hero.MainHero.Gold >= this.gangLeaderPayoffNeeded)
+                {
+                    explanation = new TextObject("You can afford the amount.");
+                    return true;
+                }
+
+                explanation = new TextObject("You don't have enough gold.");
+                return false;
             }
 
             private bool gang_leader_altern_path_clickable_delegate(out TextObject explanation)
@@ -540,15 +608,15 @@ namespace VillageBoyGoesBad
                                 MBTextManager.SetTextVariable("PERSUASION_REACTION", "Go on..", false);
                                 return true;}, null, this);
 
-                resultFlow.AddPlayerLine("pb_vbgb_son_persuasion_player_option_1", "pb_vbgb_son_persuasion_options", "pb_vbgb_son_persuasion_attempt", "player option 1", null,
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuasion_player_option_1", "pb_vbgb_son_persuasion_options", "pb_vbgb_son_persuasion_attempt", "Your father loves you, "+this._headmansSon.Name+". I know it doesn't always seem like it but he just wants you safe and home with family.", null,
                     delegate { this._task.Options[0].BlockTheOption(true); }, this, 100,
                     new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable_1),
                     new ConversationSentence.OnPersuasionOptionDelegate(persuasion_option_persuasion_1));
-                resultFlow.AddPlayerLine("pb_vbgb_son_persuasion_player_option_2", "pb_vbgb_son_persuasion_options", "pb_vbgb_son_persuasion_attempt", "player option 2", null,
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuasion_player_option_2", "pb_vbgb_son_persuasion_options", "pb_vbgb_son_persuasion_attempt", "You may think you've got things figured out. I've been here before, in your situation. It's a rough life and you're leaving behind a better one.", null,
                     delegate { this._task.Options[1].BlockTheOption(true); }, this, 100,
                     new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable_2),
                     new ConversationSentence.OnPersuasionOptionDelegate(persuasion_option_persuasion_2));
-                resultFlow.AddPlayerLine("pb_vbgb_son_persuasion_player_option_3", "pb_vbgb_son_persuasion_options", "pb_vbgb_son_persuasion_attempt", "player option 3", null, 
+                resultFlow.AddPlayerLine("pb_vbgb_son_persuasion_player_option_3", "pb_vbgb_son_persuasion_options", "pb_vbgb_son_persuasion_attempt", "Look, you're coming home whether you want to or not. So what will it be, are you coming home with a broken nose?", null, 
                     delegate { this._task.Options[2].BlockTheOption(true); }, this, 100,
                     new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable_3),
                     new ConversationSentence.OnPersuasionOptionDelegate(persuasion_option_persuasion_3));
@@ -556,7 +624,7 @@ namespace VillageBoyGoesBad
                 resultFlow.AddDialogLine("pb_vbgb_son_persuasion_success", "pb_vbgb_son_persuasion", "pb_vbgb_convo_success", "you've convinced me!", 
                     new ConversationSentence.OnConditionDelegate(ConversationManager.GetPersuasionProgressSatisfied),
                     delegate { ConversationManager.EndPersuasion(); }, this);
-                resultFlow.AddDialogLine("pb_vbgb_son_persuasion_failure", "pb_vbgb_son_persuasion", "pb_vbgb_player_options_end_1", "No, you have not convinced me",
+                resultFlow.AddDialogLine("pb_vbgb_son_persuasion_failure", "pb_vbgb_son_persuasion", "pb_vbgb_player_options_end_1", "I don't know who you think you are but you can take your leave and mind your own business.",
                     delegate { return _task.Options.All((PersuasionOptionArgs x) => x.IsBlocked); }, 
                     delegate {
                         ConversationManager.EndPersuasion();
@@ -575,22 +643,22 @@ namespace VillageBoyGoesBad
             }
             private void son_persuasion_delegate_init()
             {
-                ConversationManager.StartPersuasion(5, 1, 0f, 2f, 3f, 0f, PersuasionDifficulty.Medium);
+                ConversationManager.StartPersuasion(3f, 1f, 0f, 2f, 1f, 0f, PersuasionDifficulty.Medium);
                 this._task = new PersuasionTask(0);
 
-                TextObject Line = new TextObject("I suppose...");
-                PersuasionOptionArgs option1 = new PersuasionOptionArgs(DefaultSkills.Charm, DefaultTraits.Mercy,
-                    TraitEffect.Positive, PersuasionArgumentStrength.Normal, false, Line);
+                TextObject Line = new TextObject("I suppose...1");
+                PersuasionOptionArgs option1 = new PersuasionOptionArgs(DefaultSkills.Leadership, DefaultTraits.Valor,
+                    TraitEffect.Positive, PersuasionArgumentStrength.Easy, false, Line);
                 this._task.AddOptionToTask(option1);
 
-                Line = new TextObject("I suppose...");
-                PersuasionOptionArgs option2 = new PersuasionOptionArgs(DefaultSkills.Leadership, DefaultTraits.Mercy,
-                    TraitEffect.Positive, PersuasionArgumentStrength.Normal, false, Line);
+                Line = new TextObject("I suppose...2");
+                PersuasionOptionArgs option2 = new PersuasionOptionArgs(DefaultSkills.Roguery, DefaultTraits.Honor,
+                    TraitEffect.Negative, PersuasionArgumentStrength.Normal, false, Line);
                 this._task.AddOptionToTask(option2);
 
-                Line = new TextObject("I suppose...");
+                Line = new TextObject("I suppose...3");
                 PersuasionOptionArgs option3 = new PersuasionOptionArgs(DefaultSkills.Roguery, DefaultTraits.Mercy,
-                    TraitEffect.Positive, PersuasionArgumentStrength.Normal, false, Line);
+                    TraitEffect.Negative, PersuasionArgumentStrength.Hard, true, Line);
                 this._task.AddOptionToTask(option3);
             }
 
@@ -646,8 +714,9 @@ namespace VillageBoyGoesBad
             {
                 DialogFlow resultDialog = DialogFlow.CreateDialogFlow("start", 6000).BeginNpcOptions().
                     NpcOption("Oh my god we did it...", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && !base.IsFinalized).
-                    PlayerLine("So you'll go back to daddy, yea?").
-                    NpcLine("dolphinately bro", null, null).
+                        PlayerLine("So you're going to head straight home now, right?").
+                        NpcLine("Yes yes, I don't think I'll be heading back in town anytime soon.", null, null).
+                        PlayerLine("I'm glad to hear it.").
                         Consequence(delegate
                         { Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence; }).CloseDialog().
                     NpcOption("I'll head home right away!", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && base.IsFinalized).CloseDialog(); //GotoDialogState("close_window");
@@ -998,6 +1067,8 @@ namespace VillageBoyGoesBad
 
             [SaveableField(160)]
             public int _goldReward;
+
+            public List<Hero> _eligibleCompanionsForRogeury;
         }
     }
 }
