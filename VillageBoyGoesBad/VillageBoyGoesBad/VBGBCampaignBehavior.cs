@@ -224,6 +224,7 @@ namespace VillageBoyGoesBad
             public VBGBQuest(string questId, Hero questGiver, Town targetTown, Hero gangLeader, bool friendsWithGang, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
             {
                 //init Quest vars, such as 'PlayerhastalkedwithX', 'DidPlayerFindY'
+                this.CreateQuestNPCs();
                 this._gangLeader = gangLeader;
                 this._targetTown = targetTown;
                 this.SetDialogs();
@@ -330,6 +331,13 @@ namespace VillageBoyGoesBad
                 }
             }
 
+            private void CreateQuestNPCs()
+            {
+                this.createHeadmansSon();
+                this._gangMemberLocChar1 = this.createGangMember();
+                this._gangMemberLocChar2 = this.createGangMember();
+            }
+
             private void OnAgentHit(Agent agentHit, int damage)
             {
                 InformationManager.DisplayMessage(new InformationMessage("Son has been hit"));
@@ -358,21 +366,21 @@ namespace VillageBoyGoesBad
                 }
             }
 
-            private LocationCharacter createHeadmansSon()
-            {
-                InformationManager.DisplayMessage(new InformationMessage(this.QuestGiver.Name.ToString()));
+            private void createHeadmansSon()
+            {                
                 //Hero troop2 = HeroCreator.CreateRelativeNotableHero(this.QuestGiver);
 
                 Hero son = HeroCreator.CreateSpecialHero((from x in CharacterObject.Templates
                                                           where this.QuestGiver.Culture == x.Culture &&
                                                           x.Occupation == Occupation.Wanderer &&
-                                                          !x.IsFemale
+                                                          !x.IsFemale                                                           
                                                           select x).GetRandomElement<CharacterObject>());
-                son.Name = new TextObject("Notable's son");
+                TextObject newName = new TextObject(QuestGiver.FirstName.ToString() + "'s son, " + son.FirstName);
+                son.Name = newName;
 
                 this._headmansSon = son;
                 this._headmansSonLocChar = this.createSonLocCharacter(son);
-                return this._headmansSonLocChar;
+                //return this._headmansSonLocChar;
                 //Hero troop = HeroCreator.CreateSpecialHero(CharacterObject.Templates.GetRandomElement<CharacterObject>(), null, null, null);
                 //AgentData agent = new AgentData(new SimpleAgentOrigin(son.CharacterObject));
                 //LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
@@ -420,10 +428,10 @@ namespace VillageBoyGoesBad
                     if (this._headmansSon == null)
                     {
                         this._tavernLocationId = Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern");
-                        this._tavernLocationId.AddCharacter(this.createHeadmansSon());
-                        this._gangMemberLocChar1 = this.createGangMember();
+                        this._tavernLocationId.AddCharacter(this._headmansSonLocChar);
+                        
                         this._tavernLocationId.AddCharacter(this._gangMemberLocChar1);
-                        this._gangMemberLocChar2 = this.createGangMember();
+                        
                         this._tavernLocationId.AddCharacter(this._gangMemberLocChar2);
                     } else if (this._headmansSon != null)
                     {
