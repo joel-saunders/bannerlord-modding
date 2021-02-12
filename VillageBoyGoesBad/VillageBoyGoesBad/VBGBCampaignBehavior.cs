@@ -262,6 +262,7 @@ namespace VillageBoyGoesBad
                 CampaignEvents.SettlementEntered.AddNonSerializedListener(this, new Action<MobileParty, Settlement, Hero>(this.EnterTargetSettlement));
                 CampaignEvents.BeforeMissionOpenedEvent.AddNonSerializedListener(this, new Action(this.BeforeTownEnter));
                 CampaignEvents.OnMissionStartedEvent.AddNonSerializedListener(this, new Action<IMission>(this.OnMissionStarted));
+                CampaignEvents.AfterDailyTickEvent.AddNonSerializedListener(this, new Action(this.OnAfterDailyTick));
                 //CampaignEvents.HeroRelationChanged.AddNonSerializedListener(this, new Action<Hero, Hero, int, bool>(this.OnHeroRelationChanged));
             }
 
@@ -320,6 +321,15 @@ namespace VillageBoyGoesBad
                 Mission.Current.RemoveMissionBehaviour(Mission.Current.GetMissionBehaviour<LeaveMissionLogic>());
                 Mission.Current.MissionBehaviours.ForEach(x => InformationManager.DisplayMessage(new InformationMessage(x.ToString())));
                 //InformationManager.DisplayMessage(new InformationMessage(Mission.Current.MainAgent.GetWieldedItemIndex(Agent.HandIndex.MainHand).ToString()));
+            }
+
+            private void OnAfterDailyTick()
+            {
+                if(this._companionPathChosen && this._companionSolutionCompletionDate.IsPast)
+                {
+                    InformationManager.DisplayMessage(new InformationMessage("It worked! jfdoiasjfoapds"));
+                    base.CompleteQuestWithSuccess();
+                }
             }
 
             private void OnHeroRelationChanged(Hero player, Hero gangLeader, int relationChange, bool idkyet)
@@ -488,17 +498,17 @@ namespace VillageBoyGoesBad
 
 
                 TextObject npcCostLine = new TextObject("If you cover the cost of {GOLD_COST} {GOLD_ICON} the boy can go free. Alternatively, if you have a companion that could help me out...");
-                npcCostLine.SetTextVariable("GOLD_COST", this.gangLeaderPayoffNeeded.ToString());
-                npcCostLine.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
+                //npcCostLine.SetTextVariable("GOLD_COST", this.gangLeaderPayoffNeeded.ToString());
+                //npcCostLine.SetTextVariable("GOLD_ICON", "{=!}<img src=\"Icons\\Coin@2x\">");
 
                 DialogFlow resultFlow = DialogFlow.CreateDialogFlow("hero_main_options", 600).
-                    PlayerLine("I would like to discuess " + this._headmansSon.FirstName + " and his position in your businesses?").Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).BeginNpcOptions().
+                    PlayerLine("I would like to discuess " + this._headmansSon.FirstName + " and his position in your businesses?").Condition(() => Hero.OneToOneConversationHero == this._gangLeader && base.IsOngoing).Consequence(setup_available_companions_consequence_delegate).BeginNpcOptions().
                     NpcOption("Sure. It will however cost you, one way or the other.", () => this._gangLeader.GetRelationWithPlayer() >= -10 && this._gangLeader.GetRelationWithPlayer() < 20).
                         NpcLine(npcCostLine).BeginPlayerOptions().
                             PlayerOption("I do have a companion whose services I could lend to you.").ClickableCondition(player_has_companion_rouge_enough).
                                 NpcLine("I'll need them for 5 days. Who is it that you're sending me?").GotoDialogState("pb_alternative_solution_rogue_companion_list").GoBackToDialogState("pb_alternative_solution_rogue_companion_list_RETURN").
-                                PlayerLine("And "+this._headmansSon.FirstName+" is sent home right?").
-                                NpcLine("Of course, I'll have my men tell him he isn't fit for this life").Consequence(alternative_solution_begins).NpcLine("Anything Else?").GoBackToDialogState("hero_main_options").
+                                
+                                NpcLine("Of course, I'll have my men tell him he isn't fit for this life").Consequence(alternative_solution_begins).NpcLine("Anything Else?").GotoDialogState("hero_main_options").
                             PlayerOption("We have a deal. I'll pay and the son walks free.").ClickableCondition(player_can_afford_gang_leader_payoff).
                                 NpcLine("Excellent, he's all yours. Happy doing business with you.").Consequence(player_completes_quest_by_payment).
                                 NpcLine("Anything else I can help you with, friend?").GotoDialogState("hero_main_options").
@@ -511,7 +521,16 @@ namespace VillageBoyGoesBad
 
             private void alternative_solution_begins()
             {
-
+                base.AddLog(new TextObject("You sent " + this._rogueCompanionForAlternativeSolution.Name.ToString() + " to help " + this._gangLeader.Name.ToString() + " in order to have "+this.QuestGiver.Name+"'s son, "+this._headmansSon.FirstName+", released. This should take around 3 days."));
+                this._rogueCompanionForAlternativeSolution.AddEventForOccupiedHero(base.StringId);
+                this._rogueCompanionForAlternativeSolution.ChangeState(Hero.CharacterStates.Disabled);
+                if(this.QuestDueTime < CampaignTime.Days(3f))
+                {
+                    this.ChangeQuestDueTime(CampaignTime.Days(4f));
+                    //add log of saying time was extended
+                }
+                this._companionPathChosen = true;
+                this._companionSolutionCompletionDate = CampaignTime.DaysFromNow(3f);
             }
             private void player_completes_quest_by_payment()
             {
@@ -520,41 +539,59 @@ namespace VillageBoyGoesBad
             }
             private bool player_has_companion_rouge_enough(out TextObject explanation)
             {
-                bool flag = false;
-                explanation = new TextObject("You do not have a companion high with enough rogeury skill.");
+                explanation = new TextObject("you got enough");
+                return true;
+                //InformationManager.DisplayMessage(new InformationMessage("1"));
+                //bool flag = false;
+                //explanation = new TextObject("You do not have a companion high with enough rogeury skill.");
+                //this._eligibleCompanionsForRogeury = new List<Hero>();
+
+                //InformationManager.DisplayMessage(new InformationMessage("2"));
+                //foreach (TroopRosterElement troop in MobileParty.MainParty.MemberRoster)
+                //{
+                //    if(troop.Character.IsHero && !troop.Character.HeroObject.IsOccupiedByAnEvent() && troop.Character.GetSkillValue(DefaultSkills.Roguery) > 30)
+                //    {
+                //        this._eligibleCompanionsForRogeury.Add(troop.Character.HeroObject);
+                //        if(!flag)
+                //        {
+                //            flag = true;
+                //            explanation = new TextObject("You have a companion with enough Rogeury skill.");
+                //        }
+                //    }
+                //}
+                //InformationManager.DisplayMessage(new InformationMessage("3"));
+                //if (this._eligibleCompanionsForRogeury.Count > 0)
+                //{
+                //    //this.CreateDialogsForEachAvailableRogueCompanions(this._eligibleCompanionsForRogeury);
+                //}
+                //InformationManager.DisplayMessage(new InformationMessage("4"));
+                //return flag;
+            }
+            private void setup_available_companions_consequence_delegate()
+            {
                 this._eligibleCompanionsForRogeury = new List<Hero>();
-
-
                 foreach (TroopRosterElement troop in MobileParty.MainParty.MemberRoster)
                 {
-                    if(troop.Character.IsHero && !troop.Character.HeroObject.IsOccupiedByAnEvent() && troop.Character.GetSkillValue(DefaultSkills.Roguery) > 30)
+                    if (troop.Character.IsHero && !troop.Character.HeroObject.IsOccupiedByAnEvent() && troop.Character.GetSkillValue(DefaultSkills.Roguery) > 30)
                     {
-                        this._eligibleCompanionsForRogeury.Add(troop.Character.HeroObject);
-                        if(!flag)
-                        {
-                            flag = true;
-                            explanation = new TextObject("You have a companion with enough Rogeury skill.");
-                        }
+                        this._eligibleCompanionsForRogeury.Add(troop.Character.HeroObject);                        
                     }
                 }
-
-                if(this._eligibleCompanionsForRogeury.Count > 0)
+                if (this._eligibleCompanionsForRogeury.Count > 0)
                 {
                     this.CreateDialogsForEachAvailableRogueCompanions(this._eligibleCompanionsForRogeury);
                 }
-
-                return flag;
             }
-
             private void CreateDialogsForEachAvailableRogueCompanions(List<Hero> rogueCompanions)
             {
                 foreach(Hero companion in rogueCompanions)
                 {
                     DialogFlow dialog = DialogFlow.CreateDialogFlow("pb_alternative_solution_rogue_companion_list", 1000).GoBackToDialogState("pb_alternative_solution_rogue_companion_list").
-                        PlayerLine(companion.Name.ToString()).GotoDialogState("pb_alternative_solution_rogue_companion_list_RETURN");
+                        PlayerLine(companion.Name.ToString()).Consequence(delegate { this._rogueCompanionForAlternativeSolution = companion; }).NpcLine("cool").PlayerLine("And " + this._headmansSon.FirstName + " is sent home right?").GotoDialogState("pb_alternative_solution_rogue_companion_list_RETURN");
 
                     Campaign.Current.ConversationManager.AddDialogFlow(dialog);
                 }
+                
             }
 
             private bool player_can_afford_gang_leader_payoff(out TextObject explanation)
@@ -1077,6 +1114,15 @@ namespace VillageBoyGoesBad
             public int _goldReward;
 
             public List<Hero> _eligibleCompanionsForRogeury;
+
+            [SaveableField(170)]
+            public Hero _rogueCompanionForAlternativeSolution;
+
+            [SaveableField(180)]
+            private bool _companionPathChosen;
+
+            [SaveableField(190)]
+            private CampaignTime _companionSolutionCompletionDate;
         }
     }
 }
