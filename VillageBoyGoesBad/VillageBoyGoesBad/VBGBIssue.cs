@@ -17,7 +17,7 @@ using TaleWorlds.CampaignSystem.Actions;
 using Helpers;
 using TaleWorlds.CampaignSystem.Overlay;
 using System.Windows.Forms;
-using TaleWorlds.TwoDimension;
+//using TaleWorlds.TwoDimension;
 using TaleWorlds.CampaignSystem.SandBox;
 using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
@@ -55,7 +55,7 @@ namespace VillageBoyGoesBad
 
                 if (this.IssueOwner != null)
                 {
-                    StringHelpers.SetCharacterProperties("TARGET", this._gangLeader.CharacterObject, null, result);
+                    StringHelpers.SetCharacterProperties("TARGET", this._gangLeader.CharacterObject, result);
                     StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.CurrentSettlement, result);
                 }
                 return result;
@@ -90,7 +90,7 @@ namespace VillageBoyGoesBad
                 if (this._isFriendsWithGang)
                 {
                     TextObject result = new TextObject("I can get your son back. Infact, I am fairly well aquainted with {GANGLEADER.LINK}. I'm sure I can work something out with them.");
-                    StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, result, false);
+                    StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, result);
                     return result;
                 }
                 else

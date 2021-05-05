@@ -12,12 +12,13 @@ using TaleWorlds.CampaignSystem.GameMenus;
 using TaleWorlds.CampaignSystem.CharacterDevelopment.Managers;
 using TaleWorlds.CampaignSystem.Conversation.Persuasion;
 using TaleWorlds.Core;
+
 using TaleWorlds.Localization;
 using TaleWorlds.CampaignSystem.Actions;
 using Helpers;
 using TaleWorlds.CampaignSystem.Overlay;
 using System.Windows.Forms;
-using TaleWorlds.TwoDimension;
+//using TaleWorlds.TwoDimension;
 using TaleWorlds.CampaignSystem.SandBox;
 using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
@@ -35,9 +36,9 @@ namespace VillageBoyGoesBad
     class VBGBQuest : QuestBase
     {
         public VBGBQuest(string questId, Hero questGiver, Town targetTown, Hero gangLeader, bool friendsWithGang, CampaignTime duration, int rewardGold) : base(questId, questGiver, duration, rewardGold)
-        {            
-            this.CreateQuestNPCs();
+        {
             this._gangLeader = gangLeader;
+            this.CreateQuestNPCs();            
             this._targetTown = targetTown;
             this.SetDialogs();
             this.InitializeQuestOnCreation();
@@ -47,10 +48,10 @@ namespace VillageBoyGoesBad
             this._goldReward = rewardGold;            
 
             TextObject newLog = new TextObject("{QUESTGIVER.LINK}, a headman from {QUESTGIVERSETTLEMENT.LINK}, has asked you to speak to his son over at {TARGETTOWN.LINK}. {GANGLEADER.LINK} has convinced him to join his crew and his father believes he is way over his head. In exchange, " + QuestGiver.FirstName + " will pay you " + base.RewardGold + " for your help.");
-            StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, this.QuestGiver.FirstName, newLog, false);
-            StringHelpers.SetSettlementProperties("QUESTGIVERSETTLEMENT", this.QuestGiver.HomeSettlement, newLog, false);
-            StringHelpers.SetSettlementProperties("TARGETTOWN", this._targetTown.Settlement, newLog, false);
-            StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, newLog, false);
+            StringHelpers.SetCharacterProperties("QUESTGIVER", this.QuestGiver.CharacterObject, newLog);
+            StringHelpers.SetSettlementProperties("QUESTGIVERSETTLEMENT", this.QuestGiver.HomeSettlement, newLog);
+            StringHelpers.SetSettlementProperties("TARGETTOWN", this._targetTown.Settlement, newLog);
+            StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, newLog);
 
             base.AddTrackedObject(this._targetTown.Settlement);
             base.AddLog(newLog);
@@ -126,8 +127,8 @@ namespace VillageBoyGoesBad
             //Mission.Current.RemoveMissionBehaviour(Mission.Current.GetMissionBehaviour<MissionFightHandler>());
             if (this._tavernLocationId != null &&
                 Hero.MainHero.CurrentSettlement != null &&
-                Hero.MainHero.CurrentSettlement.LocationComplex.GetLocationOfCharacter(Hero.MainHero) ==
-                Hero.MainHero.CurrentSettlement.LocationComplex.GetLocationWithId("tavern") && 
+                //Hero.MainHero.CurrentSettlement.LocationComplex.GetLocationOfCharacter(Hero.MainHero) ==
+                //Hero.MainHero.CurrentSettlement.LocationComplex.GetLocationWithId("tavern") && 
                 this._tavernLocationId == Settlement.CurrentSettlement.LocationComplex.GetLocationWithId("tavern"))
             {
                 VBGBMissionFightHandler missionBehavior = new VBGBMissionFightHandler(new Action<Agent, int>(this.OnAgentHit));
@@ -167,6 +168,7 @@ namespace VillageBoyGoesBad
         private void CreateQuestNPCs()
         {
             this.createHeadmansSon();
+            this._gangMemberAgents = new List<Agent>();
             this._gangMemberLocChar1 = this.createGangMember();
             this._gangMemberLocChar2 = this.createGangMember();
         }
@@ -174,7 +176,7 @@ namespace VillageBoyGoesBad
         private void OnAgentHit(Agent agentHit, int damage)
         {
             InformationManager.DisplayMessage(new InformationMessage("Son has been hit"));
-            if (agentHit == this._sonAgent && this._playerBeatSon && base.IsOngoing && agentHit.Health <= (float)damage + 70f)
+            if (this._playerFightsSon && agentHit == this._sonAgent && base.IsOngoing && agentHit.Health <= (float)damage + 70f)
             {
                 Mission.Current.GetMissionBehaviour<MissionFightHandler>().EndFight();
                 if (this._sonAgent.Position.DistanceSquared(Agent.Main.Position) < 35)
@@ -190,6 +192,10 @@ namespace VillageBoyGoesBad
 
 
             }
+            //if (this._playerFightsSon && agentHit == this._sonAgent && base.IsOngoing)                    
+            //{
+                
+            //}
         }
         private void EnterTargetSettlement(MobileParty party, Settlement settlement, Hero hero)
         {
@@ -203,11 +209,12 @@ namespace VillageBoyGoesBad
         {
             //Hero troop2 = HeroCreator.CreateRelativeNotableHero(this.QuestGiver);
 
-            Hero son = HeroCreator.CreateSpecialHero((from x in CharacterObject.Templates
-                                                      where this.QuestGiver.Culture == x.Culture &&
-                                                      x.Occupation == Occupation.Wanderer &&
-                                                      !x.IsFemale
-                                                      select x).GetRandomElement<CharacterObject>());
+            Hero son = HeroCreator.CreateSpecialHero(TaleWorlds.Core.Extensions.GetRandomElementWithPredicate<CharacterObject>(CharacterObject.Templates, (CharacterObject x) =>
+                                                       this.QuestGiver.Culture == x.Culture &&
+                                                       x.Occupation == Occupation.Wanderer &&
+                                                       !x.IsFemale
+                                                      ));
+
             TextObject newName = new TextObject(QuestGiver.FirstName.ToString() + "'s son, " + son.FirstName);
             son.Name = newName;
 
@@ -226,7 +233,7 @@ namespace VillageBoyGoesBad
         {
             AgentData agent = new AgentData(new SimpleAgentOrigin(son.CharacterObject));
             LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
-            "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_in_tavern", true, false, null, false, true, true);
+            "npc_common", true, LocationCharacter.CharacterRelations.Friendly, "as_human_villager_in_tavern", true, false, null, false, false, true);
             this._headmansSon.CivilianEquipment.AddEquipmentToSlotWithoutAgent(EquipmentIndex.WeaponItemBeginSlot, new EquipmentElement(MBObjectManager.Instance.GetObject<ItemObject>("short_sword_t3"), null));
             return locChar;
         }
@@ -236,20 +243,26 @@ namespace VillageBoyGoesBad
             //InformationManager.DisplayMessage(new InformationMessage(this.QuestGiver.Name.ToString()));
             //Hero troop2 = HeroCreator.CreateRelativeNotableHero(this.QuestGiver);
 
-            Hero hero = HeroCreator.CreateSpecialHero((from x in CharacterObject.Templates
-                                                       where this.QuestGiver.Culture == x.Culture &&
+            Hero hero = HeroCreator.CreateSpecialHero(TaleWorlds.Core.Extensions.GetRandomElementWithPredicate<CharacterObject>(CharacterObject.Templates, (CharacterObject x) =>
+                                                       this.QuestGiver.Culture == x.Culture &&
                                                          x.Occupation == Occupation.GangLeader &&
-                                                         !x.IsFemale
-                                                       select x).GetRandomElement<CharacterObject>());
+                                                         !x.IsFemale));
 
-            hero.Name = new TextObject("Gang Member");
+
+            CharacterObject gangChar = this._gangLeader.MapFaction.Culture.GangleaderBodyguard;
+
+
+                
+
+            //CharacterObject charOb = CharacterObject.Templates.Where<CharacterObject chO>()
+            //hero.Name = new TextObject("Gang Member");
 
             //this._gangMember1 = hero;
 
             //Hero troop = HeroCreator.CreateSpecialHero(CharacterObject.Templates.GetRandomElement<CharacterObject>(), null, null, null);
-            AgentData agent = new AgentData(new SimpleAgentOrigin(hero.CharacterObject));
+            AgentData agent = new AgentData(new SimpleAgentOrigin(gangChar));
             LocationCharacter locChar = new LocationCharacter(agent, new LocationCharacter.AddBehaviorsDelegate(SandBoxManager.Instance.AgentBehaviorManager.AddWandererBehaviors),
-            "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villager_gangleader", true, false, null, false, true, true);
+            "npc_common", true, LocationCharacter.CharacterRelations.Neutral, "as_human_villain", true, false, null, false, false, true);
 
             return locChar;
         }
@@ -377,7 +390,7 @@ namespace VillageBoyGoesBad
             this._eligibleCompanionsForRogeury = new List<Hero>();
 
             InformationManager.DisplayMessage(new InformationMessage("2"));
-            foreach (TroopRosterElement troop in MobileParty.MainParty.MemberRoster)
+            foreach (TroopRosterElement troop in MobileParty.MainParty.MemberRoster.GetTroopRoster())
             {
                 if (troop.Character.IsHero && !troop.Character.HeroObject.IsOccupiedByAnEvent() && troop.Character.GetSkillValue(DefaultSkills.Roguery) > 30)
                 {
@@ -400,7 +413,7 @@ namespace VillageBoyGoesBad
         private void setup_available_companions_consequence_delegate()
         {
             this._eligibleCompanionsForRogeury = new List<Hero>();
-            foreach (TroopRosterElement troop in MobileParty.MainParty.MemberRoster)
+            foreach (TroopRosterElement troop in MobileParty.MainParty.MemberRoster.GetTroopRoster())
             {
                 if (troop.Character.IsHero && !troop.Character.HeroObject.IsOccupiedByAnEvent() && troop.Character.GetSkillValue(DefaultSkills.Roguery) > 30)
                 {
@@ -466,8 +479,8 @@ namespace VillageBoyGoesBad
         {
             DialogFlow resultFlow = DialogFlow.CreateDialogFlow("start", 6000).
                 BeginNpcOptions().
-                    NpcOption("Hello stranger, can I help you?", (() => Hero.OneToOneConversationHero == this._headmansSon && !this._initialSonConvoComplete && !this._playerTeamWon && this._sonPersuasionFailed == false && !this._playerBeatSon)).GotoDialogState("pb_vbgb_soniniticonvo").
-                    NpcOption("You again, look you're not going to change my mind so save us both the time and leave.", () => Hero.OneToOneConversationHero == this._headmansSon && this._sonPersuasionFailed == true && !this._playerBeatSon).CloseDialog().GoBackToDialogState("pb_vbgb_soniniticonvo").
+                    NpcOption("Hello stranger, can I help you?", (() => Hero.OneToOneConversationHero == this._headmansSon && !this._initialSonConvoComplete && !this._playerTeamWon && this._sonPersuasionFailed == false && !this._playerFightsSon)).GotoDialogState("pb_vbgb_soniniticonvo").
+                    NpcOption("You again, look you're not going to change my mind so save us both the time and leave.", () => Hero.OneToOneConversationHero == this._headmansSon && this._sonPersuasionFailed == true && !this._playerFightsSon).CloseDialog().GoBackToDialogState("pb_vbgb_soniniticonvo").
                 BeginPlayerOptions().
                     PlayerOption("Yes you can, name. Your father sent me").GotoDialogState("pb_vbgb_player_options_end_1").
                     PlayerOption("You don't know what you're getting into").GotoDialogState("pb_vbgb_player_options_end_1").GoBackToDialogState("pb_vbgb_player_options_end_1").
@@ -481,7 +494,7 @@ namespace VillageBoyGoesBad
                             Consequence(new ConversationSentence.OnConsequenceDelegate(son_persuasion_delegate_init)).GotoDialogState("pb_vbgb_son_persuasion").
                     PlayerOption("You're coming home with me, now. Come on, don't make this difficult.").
                         NpcLine("What? what do you think you're trying to pull?!").
-                        PlayerLine("Fine, I'll kick your ass then.").Consequence(new ConversationSentence.OnConsequenceDelegate(player_fights_son_delegate)).CloseDialog().
+                        PlayerLine("On your gaurd, boy.").Consequence(new ConversationSentence.OnConsequenceDelegate(player_fights_son_delegate)).CloseDialog().
                     PlayerOption("this isn't worth it... your father can keep his money, you're not worth the trouble.").
                         Condition(() => this._sonPersuasionFailed).
                         Consequence(new ConversationSentence.OnConsequenceDelegate(player_gives_up)).CloseDialog().
@@ -511,7 +524,7 @@ namespace VillageBoyGoesBad
                 new ConversationSentence.OnClickableConditionDelegate(persuasion_option_clickable_3),
                 new ConversationSentence.OnPersuasionOptionDelegate(persuasion_option_persuasion_3));
 
-            resultFlow.AddDialogLine("pb_vbgb_son_persuasion_success", "pb_vbgb_son_persuasion", "pb_vbgb_convo_success", "you've convinced me!",
+            resultFlow.AddDialogLine("pb_vbgb_son_persuasion_success", "pb_vbgb_son_persuasion", "pb_vbgb_convo_success", "Ok, you're right. I've been scared for my life these past few days but they won't just let me leave.",
                 new ConversationSentence.OnConditionDelegate(ConversationManager.GetPersuasionProgressSatisfied),
                 delegate { ConversationManager.EndPersuasion(); }, this);
             resultFlow.AddDialogLine("pb_vbgb_son_persuasion_failure", "pb_vbgb_son_persuasion", "pb_vbgb_player_options_end_1", "I don't know who you think you are but you can take your leave and mind your own business.",
@@ -522,7 +535,7 @@ namespace VillageBoyGoesBad
                 }, this);
 
             resultFlow.GoBackToDialogState("pb_vbgb_convo_success").
-                NpcLine("but what do we do now?").PlayerLine("let's fine them!").NpcLine("ok, let's do it!").Consequence(new ConversationSentence.OnConsequenceDelegate(fight_son_convo_consequence)).CloseDialog();
+                NpcLine("Oh no- I think they heard us, they're walking this way").PlayerLine("Who's walking this way?").NpcLine("Some of "+this._gangLeader.FirstName+"'s men. They've been keeping an eye on me- Oh God they're going to hurt me!").PlayerLine("I won't be letting that happen. Come on, to arms!").Consequence(new ConversationSentence.OnConsequenceDelegate(fight_son_convo_consequence)).CloseDialog();
 
             return resultFlow;
         }
@@ -604,13 +617,13 @@ namespace VillageBoyGoesBad
         private DialogFlow playerTeamWonFightDialog()
         {
             DialogFlow resultDialog = DialogFlow.CreateDialogFlow("start", 6000).BeginNpcOptions().
-                NpcOption("Oh my god we did it...", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && !base.IsFinalized).
+                NpcOption("We did it... Oh thank you, thank you sir", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && !base.IsFinalized).
                     PlayerLine("So you're going to head straight home now, right?").
-                    NpcLine("Yes yes, I don't think I'll be heading back in town anytime soon.", null, null).
-                    PlayerLine("I'm glad to hear it.").
+                    NpcLine("Yes yes, maybe after a drink or two...", null, null).
+                    PlayerLine("Do as you like. You certainly won't be a part of "+this._gangLeader.FirstName+"'s crew anymore.").
                     Consequence(delegate
                     { Campaign.Current.ConversationManager.ConversationEndOneShot += this.vicotry_conversation_consequence; }).CloseDialog().
-                NpcOption("I'll head home right away!", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && base.IsFinalized).CloseDialog(); //GotoDialogState("close_window");
+                NpcOption("Thank's again.", () => Hero.OneToOneConversationHero == this._headmansSon && this._playerTeamWon && base.IsFinalized).CloseDialog(); //GotoDialogState("close_window");
 
             return resultDialog;
         }
@@ -618,8 +631,8 @@ namespace VillageBoyGoesBad
 
         private void vicotry_conversation_consequence()
         {
-            //Mission.Current.SetMissionMode(MissionMode.StartUp, false);
-            //GameMenu.SwitchToMenu("town");
+            Mission.Current.SetMissionMode(MissionMode.StartUp, false);
+            GameMenu.SwitchToMenu("town");
             base.CompleteQuestWithSuccess();
         }
 
@@ -631,9 +644,9 @@ namespace VillageBoyGoesBad
         private DialogFlow playerBeatupSonDialog()
         {
             DialogFlow resultDialog = DialogFlow.CreateDialogFlow("start", 6000).
-                NpcLine("Ouch, fine I'll go home.[ib:closed][if:idle_angry][rb:negative]").Condition(() => Hero.OneToOneConversationHero == this._headmansSon && this._playerBeatSon).
-                PlayerLine("Pack up your stuff!").
-                NpcLine("I'm ready.. let's go").Consequence(delegate { Campaign.Current.ConversationManager.ConversationEndOneShot += this.player_fight_son_dialog_complete_quest; }).CloseDialog();
+                NpcLine("Alright alright, you maniac! Leave me be.[ib:closed][if:idle_angry][rb:negative]").Condition(() => Hero.OneToOneConversationHero == this._headmansSon && this._playerFightsSon).
+                PlayerLine("Get lost before someone else doesn't take it easy on you.").
+                NpcLine("I get it, okay? I'll go home.").Consequence(delegate { Campaign.Current.ConversationManager.ConversationEndOneShot += this.player_fight_son_dialog_complete_quest; }).CloseDialog();
 
             return resultDialog;
         }
@@ -705,9 +718,9 @@ namespace VillageBoyGoesBad
                 };
 
             List<Agent> opponentSideAgents = new List<Agent>();
-            foreach (Agent agent in Mission.Current.GetNearbyAgents(Agent.Main.Position.AsVec2, 100f))
+            foreach (Agent agent in Mission.Current.GetNearbyAgents(Agent.Main.Position.AsVec2, 200f))
             {
-                if (agent.Name == "Gang Member")
+                if (agent.Character == this._gangMemberLocChar1.Character || agent.Character == this._gangMemberLocChar2.Character)
                 {
                     opponentSideAgents.Add(agent);
                 }
@@ -717,6 +730,10 @@ namespace VillageBoyGoesBad
 
             Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSideAgents, opponentSideAgents, false, false, false,
                 new MissionFightHandler.OnFightEndDelegate(this.AfterFightGangAction), true, null, null, null, null);
+
+            //this._sonAgent.Retreat();
+
+            //this._headmansSonLocChar.IsVisualTracked = false;
 
             InformationManager.DisplayMessage(new InformationMessage(Mission.Current.MainAgent.GetWieldedItemIndex(Agent.HandIndex.MainHand).ToString()));
             //Mission.Current.MainAgent.ChangeWeaponHitPoints(Mission.Current.MainAgent.GetWieldedItemIndex(Agent.HandIndex.MainHand),100);
@@ -782,7 +799,7 @@ namespace VillageBoyGoesBad
 
         private void player_fights_son_delegate()
         {
-            this._playerBeatSon = true;
+            this._playerFightsSon = true;
             this._sonAgent = (Agent)MissionConversationHandler.Current.ConversationManager.ConversationAgents.First((IAgent x) =>
                 x.Character != null && x.Character == this._headmansSon.CharacterObject);
 
@@ -798,6 +815,9 @@ namespace VillageBoyGoesBad
 
             Mission.Current.GetMissionBehaviour<MissionFightHandler>().StartCustomFight(playerSide, opponentSide, false, true, true,
                 new MissionFightHandler.OnFightEndDelegate(this.AfterFightSonAction));
+
+            this._sonAgent.Health = 30.0f;
+            //this._headmansSonLocChar.IsVisualTracked = false;
         }
 
         private void AfterFightSonAction(bool isPlayerSideWon)
@@ -921,7 +941,7 @@ namespace VillageBoyGoesBad
         public bool _gangLeaderTalkedTo;
 
         [SaveableField(130)]
-        public bool _playerBeatSon;
+        public bool _playerFightsSon;
 
         [SaveableField(140)]
         public bool _gangRelationSufficient;
@@ -942,6 +962,9 @@ namespace VillageBoyGoesBad
 
         [SaveableField(190)]
         private CampaignTime _companionSolutionCompletionDate;
+
+        [SaveableField(200)]
+        private List<Agent> _gangMemberAgents;
 
         
     }

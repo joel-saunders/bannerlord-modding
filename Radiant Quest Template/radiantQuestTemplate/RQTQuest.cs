@@ -22,7 +22,7 @@ using TaleWorlds.CampaignSystem.SandBox;
 using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
 using TaleWorlds.CampaignSystem.SandBox.Issues;
-using NetworkMessages.FromServer;
+//using NetworkMessages.FromServer;
 
 namespace radiantQuestTemplate
 {

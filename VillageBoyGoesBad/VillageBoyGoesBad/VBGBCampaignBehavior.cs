@@ -17,7 +17,7 @@ using TaleWorlds.CampaignSystem.Actions;
 using Helpers;
 using TaleWorlds.CampaignSystem.Overlay;
 using System.Windows.Forms;
-using TaleWorlds.TwoDimension;
+//using TaleWorlds.TwoDimension;
 using TaleWorlds.CampaignSystem.SandBox;
 using TaleWorlds.Diamond.AccessProvider.Test;
 using TaleWorlds.SaveSystem;
@@ -37,21 +37,25 @@ namespace VillageBoyGoesBad
         //Event regestration. Examples, AddGameMenu; MissionTickEvent; OnPlayerBattleEndEvent; PartyVisibilityChangedEvent; OnUnitRecruitedEvent; KingdomCreatedEvent
         public override void RegisterEvents()
         {
-            CampaignEvents.OnCheckForIssueEvent.AddNonSerializedListener(this, new Action<IssueArgs>(this.OnCheckForIssues));
+            CampaignEvents.OnCheckForIssueEvent.AddNonSerializedListener(this, new Action<Hero>(this.OnCheckForIssues));
         }
 
         public override void SyncData(IDataStore dataStore)
         {           
         }
 
-        public void OnCheckForIssues(IssueArgs issueArgs)
+        public void OnCheckForIssues(Hero hero)
         {
             //Sets the Quest issue as a potential quest. First we call separate function to determine if the quest should be set as a potential quest
-            if (ConditionsHold(issueArgs.IssueOwner))
+            if (ConditionsHold(hero))
             {
-                issueArgs.SetPotentialIssueData(new PotentialIssueData(new Func<PotentialIssueData, Hero, IssueBase>(this.OnStartIssue),
-                typeof(VBGBIssue), IssueBase.IssueFrequency.VeryCommon, null));
+                Campaign.Current.IssueManager.AddPotentialIssueData(hero, new PotentialIssueData(new PotentialIssueData.StartIssueDelegate(this.OnStartIssue), typeof(VBGBCampaignBehavior.VBGBIssue), IssueBase.IssueFrequency.VeryCommon));
+                return;
+                //issueArgs.SetPotentialIssueData(new PotentialIssueData(new Func<PotentialIssueData, Hero, IssueBase>(this.OnStartIssue),
+                //typeof(VBGBIssue), IssueBase.IssueFrequency.VeryCommon, null));
             }
+            Campaign.Current.IssueManager.AddPotentialIssueData(hero, new PotentialIssueData(typeof(VBGBCampaignBehavior.VBGBIssue), IssueBase.IssueFrequency.VeryCommon));
+
         }
         //dedicated method function for Quest availablility logic
         private bool ConditionsHold(Hero issueGiver)
@@ -64,7 +68,7 @@ namespace VillageBoyGoesBad
                     issueGiver.CurrentSettlement.Village.Bound.Notables.Any((Hero gl) => gl.IsGangLeader && !gl.IsOccupiedByAnEvent());
         }
 
-        private IssueBase OnStartIssue(PotentialIssueData pid, Hero issueOwner)
+        private IssueBase OnStartIssue(in PotentialIssueData pid, Hero issueOwner)
         {
             
             return new VBGBIssue(issueOwner, this.GetGangNotable(issueOwner));
@@ -117,7 +121,7 @@ namespace VillageBoyGoesBad
 
                     if (this.IssueOwner != null)
                     {
-                        StringHelpers.SetCharacterProperties("TARGET", this._gangLeader.CharacterObject, null, result);
+                        StringHelpers.SetCharacterProperties("TARGET", this._gangLeader.CharacterObject, result);
                         StringHelpers.SetSettlementProperties("SETTLEMENT", this.IssueOwner.CurrentSettlement, result);
                     }
                     return result;
@@ -152,7 +156,7 @@ namespace VillageBoyGoesBad
                     if(this._isFriendsWithGang)
                     {
                         TextObject result = new TextObject("I can get your son back. Infact, I am fairly well aquainted with {GANGLEADER.LINK}. I'm sure I can work something out with them.");
-                        StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, null, result, false);
+                        StringHelpers.SetCharacterProperties("GANGLEADER", this._gangLeader.CharacterObject, result);
                         return result;
                     } else
                     {

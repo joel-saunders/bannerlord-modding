@@ -8,8 +8,9 @@ using TaleWorlds.Core;
 using TaleWorlds.Localization;
 using TaleWorlds.MountAndBlade;
 using TaleWorlds.CampaignSystem;
+using PBQuestEngine.Director;
 
-namespace VillageBoyGoesBad
+namespace PBQuestEngine
 {
     public class Main : MBSubModuleBase
     {
@@ -21,9 +22,7 @@ namespace VillageBoyGoesBad
                 try
                 {
                     CampaignGameStarter gameStarter = (CampaignGameStarter)gameStarterObject;
-                    gameStarter.AddBehavior(new VBGBCampaignBehavior());
-                    TraitObject TforcePowersTrait = game.ObjectManager.RegisterPresumedObject<TraitObject>(new TraitObject("ForcePowers"));
-                    TforcePowersTrait.Initialize(new TextObject("{=!}ForcePowers"), new TextObject("Force powers trait"), false, -2, 2);
+                    gameStarter.AddBehavior(new DirectorCampaignBehavior()); //can this be simplified?
                 }
                 catch (Exception e)
                 {
