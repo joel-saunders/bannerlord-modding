@@ -29,7 +29,8 @@ using TaleWorlds.CampaignSystem.SandBox.CampaignBehaviors;
 using System.Runtime.Remoting.Messaging;
 using TaleWorlds.Library;
 using System.Data.Common;
-using PBQuestEngine.Components;
+using PBQuestEngine.Blocks;
+using PBQuestEngine.Director;
 
 namespace PBQuestEngine
 {
@@ -39,7 +40,9 @@ namespace PBQuestEngine
         { }
         protected override void DefineClassTypes()
         {
-            AddClassDefinition(typeof(ActorBlock), 1);            
+            AddClassDefinition(typeof(ActorBlock), 1);
+            AddClassDefinition(typeof(DirectorCampaignLogs), 2);
+            AddClassDefinition(typeof(DirectorQuest), 3);
         }
     }
     

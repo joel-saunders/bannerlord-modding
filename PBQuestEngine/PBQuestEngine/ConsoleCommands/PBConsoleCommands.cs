@@ -16,7 +16,7 @@ using TaleWorlds.ObjectSystem;
 
 namespace PBQuestEngine.Utils
 {
-    public static class PMConsoleCommands
+    public static class PBConsoleCommands
     {
         [CommandLineFunctionality.CommandLineArgumentFunction("Test_worked!", "TEST")]
         public static string TempTestMethod(List<string> strings)

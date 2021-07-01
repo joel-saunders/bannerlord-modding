@@ -1,10 +1,12 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
 using TaleWorlds.CampaignSystem.Election;
+using TaleWorlds.Core;
 
 namespace PBQuestEngine.Director
 {
@@ -29,10 +31,12 @@ namespace PBQuestEngine.Director
 
         private void OnSiegeCompletedEvent(Settlement seigedSettlement, MobileParty seigingParty, bool bool1, bool bool2)
         { 
-            if(false )// not implemented
-            {
+            //if(seigedSettlement.Culture.Name.ToString() ==  CampaignData.CultureEmpire)// not implemented
+            //{
+                InformationManager.DisplayMessage(new InformationMessage("DIRECTORTEST Settlement has been successfully sieged."));
 
-            }
+                DirectorCampaignLogs.AddSeigeCompletedEventLog(new DirectorCampaignLogs.SiegeCompletedEvent(seigedSettlement, seigingParty, bool1, bool2));
+            //}
         }
 
         private void OnClanDestroyed(Clan clan)
@@ -53,7 +57,7 @@ namespace PBQuestEngine.Director
 
         public override void SyncData(IDataStore dataStore)
         {
-            throw new NotImplementedException();
+            
         }
     }
 }
