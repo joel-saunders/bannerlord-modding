@@ -43,6 +43,20 @@ namespace PBQuestEngine.Director
             quest.StartQuest();
         }
 
-        private static List<SiegeCompletedEvent> _SiegeCompletedEventLog;
+        public struct VillageLootedEventLog
+        {
+            public Village lootedVillate;
+            public Hero HeroThatLootedVillage;
+            public CampaignTime TimeOfLooting;
+            public VillageLootedEventLog(Village lootedvillage, Hero looterHero, CampaignTime timeLootingEnded)
+            {
+                this.lootedVillate = lootedvillage;
+                this.HeroThatLootedVillage = looterHero;
+                this.TimeOfLooting = timeLootingEnded;
+            }
+        }
+
+        public static List<SiegeCompletedEvent> _SiegeCompletedEventLog;
+        public static List<VillageLootedEventLog> VillageLootedEventLogs; 
     }
 }

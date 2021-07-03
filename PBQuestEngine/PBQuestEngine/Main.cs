@@ -23,12 +23,19 @@ namespace PBQuestEngine
                 {
                     CampaignGameStarter gameStarter = (CampaignGameStarter)gameStarterObject;
                     gameStarter.AddBehavior(new DirectorCampaignBehavior()); //can this be simplified?
+                    InitLogs();
                 }
                 catch (Exception e)
                 {
                     MessageBox.Show("Something went wrong when trying to add the Campaign behavior to the game starter: " + e.ToString());
                 }
             }
+        }
+
+        private void InitLogs()
+        {
+            if (DirectorCampaignLogs._SiegeCompletedEventLog == null) { DirectorCampaignLogs._SiegeCompletedEventLog = new List<DirectorCampaignLogs.SiegeCompletedEvent>(); };
+            if (DirectorCampaignLogs._SiegeCompletedEventLog == null) { DirectorCampaignLogs.VillageLootedEventLogs = new List<DirectorCampaignLogs.VillageLootedEventLog>(); };
         }
     }
 }

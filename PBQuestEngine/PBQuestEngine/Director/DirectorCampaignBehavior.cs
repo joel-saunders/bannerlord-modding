@@ -5,6 +5,7 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using TaleWorlds.CampaignSystem;
+using TaleWorlds.CampaignSystem.SandBox.CampaignBehaviors;
 using TaleWorlds.CampaignSystem.Election;
 using TaleWorlds.Core;
 
@@ -23,6 +24,7 @@ namespace PBQuestEngine.Director
             CampaignEvents.KingdomDecisionConcluded.AddNonSerializedListener(this, new Action<KingdomDecision, DecisionOutcome, bool>(this.OnKingdomDecisionConcluded));
             CampaignEvents.MercenaryClanChangedKingdom.AddNonSerializedListener(this, new Action<Clan, Kingdom, Kingdom>(this.OnMercenaryClanChangedKingdom));
             CampaignEvents.HeroRelationChanged.AddNonSerializedListener(this, new Action<Hero, Hero, int, bool>(this.OnHeroRelationChanged));
+            CampaignEvents.OnSiegeAftermathAppliedEvent.AddNonSerializedListener(this, new Action<MobileParty, Settlement, SiegeAftermathCampaignBehavior.SiegeAftermath, Clan, Dictionary<MobileParty, float>>(this.OnSigeAftermathApplied));
 
             //Rolls for Quest formation
 
@@ -45,7 +47,10 @@ namespace PBQuestEngine.Director
         private void OnPrisonerTakenEvent(FlattenedTroopRoster troop)
         { }
         private void OnVillageLooted(Village village)
-        { }
+        {
+            InformationManager.DisplayMessage(new InformationMessage("DIRECTORTEST Village has been looted."));
+            new DirectorCampaignLogs.VillageLootedEventLog(village, village.Settlement.LastAttackerParty.LeaderHero, CampaignTime.Now);                        
+        }
         private void OnArmyCreated(Army army)
         { }
         private void OnKingdomDecisionConcluded(KingdomDecision decision, DecisionOutcome outcome, bool bool1)
@@ -53,6 +58,8 @@ namespace PBQuestEngine.Director
         private void OnMercenaryClanChangedKingdom(Clan mercenaryClan, Kingdom kingdom1, Kingdom kingdom2)
         { }
         private void OnHeroRelationChanged(Hero hero1, Hero hero2, int amount, bool bool1)
+        { }
+        private void OnSigeAftermathApplied(MobileParty party, Settlement settlment, SiegeAftermathCampaignBehavior.SiegeAftermath aftermath, Clan clan, Dictionary<MobileParty, float> idkitssomething)
         { }
 
         public override void SyncData(IDataStore dataStore)
